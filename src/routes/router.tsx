@@ -34,6 +34,9 @@ import {
 import {
   CourseMentorsPage,
 } from '@/pages/courses/CourseMentorsPage';
+import { ClassesPage } from '@/pages/classes/ClassesPage';
+import { TasksPage } from '@/pages/tasks/TasksPage';
+import { ActivityTypesPage } from '@/pages/activity-types/ActivityTypesPage';
 
 export const router =
   createBrowserRouter([
@@ -78,6 +81,25 @@ export const router =
             {
               path: 'cursos',
               element: <CoursesPage />,
+            },
+
+            {
+              path: 'turmas',
+              element: <ClassesPage />,
+            },
+
+            {
+              path: 'tarefas',
+              element: <TasksPage />,
+            },
+
+            {
+              path: 'tipos-atividade',
+              element: (
+                <RoleRoute allowed={['COORDENADORA']}>
+                  <ActivityTypesPage />
+                </RoleRoute>
+              ),
             },
 
             {

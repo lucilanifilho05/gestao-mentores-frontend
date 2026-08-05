@@ -1,4 +1,4 @@
-import { BookOpenCheck, Home, LogOut, UsersRound, GraduationCap } from 'lucide-react';
+import { BookOpenCheck, Home, LogOut, UsersRound, GraduationCap, Layers3, ListTodo, Tags } from 'lucide-react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
 import { Button } from '@/components/ui/Button';
@@ -11,6 +11,26 @@ function roleLabel(role: 'COORDENADORA' | 'MENTOR'): string {
 function getPageTitle(
   pathname: string,
 ): string {
+  if (pathname.startsWith('/tipos-atividade')) {
+    return 'Tipos de atividade';
+  }
+
+  if (
+    pathname.startsWith(
+      '/tarefas',
+    )
+  ) {
+    return 'Backlog de tarefas';
+  }
+
+  if (
+    pathname.startsWith(
+      '/turmas',
+    )
+  ) {
+    return 'Turmas';
+  }
+
   if (
     pathname.startsWith(
       '/usuarios',
@@ -71,6 +91,23 @@ export function AppShell(): JSX.Element {
             />
             Cursos
           </NavLink>
+
+          <NavLink to="/turmas" className={navItemClass}>
+            <Layers3 aria-hidden="true" className="h-5 w-5" />
+            Turmas
+          </NavLink>
+
+          <NavLink to="/tarefas" className={navItemClass}>
+            <ListTodo aria-hidden="true" className="h-5 w-5" />
+            Tarefas
+          </NavLink>
+
+          {user.papel === 'COORDENADORA' ? (
+            <NavLink to="/tipos-atividade" className={navItemClass}>
+              <Tags aria-hidden="true" className="h-5 w-5" />
+              Tipos de atividade
+            </NavLink>
+          ) : null}
 
           {user.papel === 'COORDENADORA' ? (
             <NavLink

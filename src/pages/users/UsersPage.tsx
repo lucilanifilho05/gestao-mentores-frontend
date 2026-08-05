@@ -17,6 +17,7 @@ import {
 } from '@/components/users/CreateUserDialog';
 
 import {
+    ShieldCheck,
     UserPlus,
     UsersRound,
 } from 'lucide-react';
@@ -135,7 +136,21 @@ export function UsersPage(): JSX.Element {
 
     const {
         user: currentUser,
+        logoutAll,
     } = useAuth();
+
+    const [logoutAllOpen, setLogoutAllOpen] = useState(false);
+    const [isLoggingOutAll, setIsLoggingOutAll] = useState(false);
+
+    async function handleLogoutAll(): Promise<void> {
+        setIsLoggingOutAll(true);
+        try {
+            await logoutAll();
+        } finally {
+            setIsLoggingOutAll(false);
+            setLogoutAllOpen(false);
+        }
+    }
 
     const changeStatusMutation =
         useChangeUserStatus();
@@ -299,6 +314,14 @@ export function UsersPage(): JSX.Element {
 
                         Cadastrar usuário
                     </Button>
+
+                    <Button
+                        variant="danger"
+                        onClick={() => setLogoutAllOpen(true)}
+                    >
+                        <ShieldCheck aria-hidden="true" className="h-4 w-4" />
+                        Encerrar minhas sessões
+                    </Button>
                 </div>
             </section>
 
@@ -448,6 +471,19 @@ export function UsersPage(): JSX.Element {
                 onCreated={
                     handleUserCreated
                 }
+            />
+
+            <ConfirmDialog
+                open={logoutAllOpen}
+                title="Encerrar todas as suas sessões?"
+                description="Sua conta será desconectada deste dispositivo e dos demais. As sessões dos outros usuários não serão afetadas."
+                confirmLabel="Encerrar minhas sessões"
+                confirmVariant="danger"
+                isLoading={isLoggingOutAll}
+                onClose={() => {
+                    if (!isLoggingOutAll) setLogoutAllOpen(false);
+                }}
+                onConfirm={() => void handleLogoutAll()}
             />
 
             <ConfirmDialog
