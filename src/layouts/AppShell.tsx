@@ -1,53 +1,46 @@
-import { BookOpenCheck, Home, LogOut, UsersRound, GraduationCap, Layers3, ListTodo, Tags } from 'lucide-react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import {
+  BookOpenCheck,
+  FolderKanban,
+  Home,
+  LogOut,
+  UsersRound,
+  GraduationCap,
+  Layers3,
+  ListTodo,
+  Tags,
+} from "lucide-react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 
-import { Button } from '@/components/ui/Button';
-import { useAuth } from '@/hooks/useAuth';
+import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/hooks/useAuth";
 
-function roleLabel(role: 'COORDENADORA' | 'MENTOR'): string {
-  return role === 'COORDENADORA' ? 'Coordenadora' : 'Mentor';
+function roleLabel(role: "COORDENADORA" | "MENTOR"): string {
+  return role === "COORDENADORA" ? "Coordenadora" : "Mentor";
 }
 
-function getPageTitle(
-  pathname: string,
-): string {
-  if (pathname.startsWith('/tipos-atividade')) {
-    return 'Tipos de atividade';
+function getPageTitle(pathname: string): string {
+  if (pathname.startsWith("/tipos-atividade")) {
+    return "Tipos de atividade";
+  }
+  if (pathname.startsWith("/projetos")) return "Projetos";
+
+  if (pathname.startsWith("/tarefas")) {
+    return "Backlog de tarefas";
   }
 
-  if (
-    pathname.startsWith(
-      '/tarefas',
-    )
-  ) {
-    return 'Backlog de tarefas';
+  if (pathname.startsWith("/turmas")) {
+    return "Turmas";
   }
 
-  if (
-    pathname.startsWith(
-      '/turmas',
-    )
-  ) {
-    return 'Turmas';
+  if (pathname.startsWith("/usuarios")) {
+    return "Gestão de usuários";
   }
 
-  if (
-    pathname.startsWith(
-      '/usuarios',
-    )
-  ) {
-    return 'Gestão de usuários';
+  if (pathname.startsWith("/cursos")) {
+    return "Cursos";
   }
 
-  if (
-    pathname.startsWith(
-      '/cursos',
-    )
-  ) {
-    return 'Cursos';
-  }
-
-  return 'Visão geral da sessão';
+  return "Visão geral da sessão";
 }
 
 export function AppShell(): JSX.Element {
@@ -60,7 +53,7 @@ export function AppShell(): JSX.Element {
   }
 
   const navItemClass = ({ isActive }: { isActive: boolean }): string =>
-    `gm-nav-item ${isActive ? 'gm-nav-item-active' : ''}`;
+    `gm-nav-item ${isActive ? "gm-nav-item-active" : ""}`;
 
   return (
     <div className="gm-app-background min-h-screen">
@@ -70,7 +63,9 @@ export function AppShell(): JSX.Element {
             <BookOpenCheck aria-hidden="true" className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-base font-bold tracking-tight text-white">Gestão de Mentores</p>
+            <p className="text-base font-bold tracking-tight text-white">
+              Gestão de Mentores
+            </p>
             <p className="text-xs text-blue-100/70">Ambiente educacional</p>
           </div>
         </div>
@@ -81,14 +76,8 @@ export function AppShell(): JSX.Element {
             Início
           </NavLink>
 
-          <NavLink
-            to="/cursos"
-            className={navItemClass}
-          >
-            <GraduationCap
-              aria-hidden="true"
-              className="h-5 w-5"
-            />
+          <NavLink to="/cursos" className={navItemClass}>
+            <GraduationCap aria-hidden="true" className="h-5 w-5" />
             Cursos
           </NavLink>
 
@@ -101,23 +90,21 @@ export function AppShell(): JSX.Element {
             <ListTodo aria-hidden="true" className="h-5 w-5" />
             Tarefas
           </NavLink>
+          <NavLink to="/projetos" className={navItemClass}>
+            <FolderKanban aria-hidden="true" className="h-5 w-5" />
+            Projetos
+          </NavLink>
 
-          {user.papel === 'COORDENADORA' ? (
+          {user.papel === "COORDENADORA" ? (
             <NavLink to="/tipos-atividade" className={navItemClass}>
               <Tags aria-hidden="true" className="h-5 w-5" />
               Tipos de atividade
             </NavLink>
           ) : null}
 
-          {user.papel === 'COORDENADORA' ? (
-            <NavLink
-              to="/usuarios"
-              className={navItemClass}
-            >
-              <UsersRound
-                aria-hidden="true"
-                className="h-5 w-5"
-              />
+          {user.papel === "COORDENADORA" ? (
+            <NavLink to="/usuarios" className={navItemClass}>
+              <UsersRound aria-hidden="true" className="h-5 w-5" />
               Usuários
             </NavLink>
           ) : null}
@@ -125,8 +112,12 @@ export function AppShell(): JSX.Element {
 
         <div className="border-t border-white/10 p-4">
           <div className="rounded-xl bg-white/10 p-4">
-            <p className="truncate text-sm font-semibold text-white">{user.nome}</p>
-            <p className="mt-1 truncate text-xs text-blue-100/70">{user.email}</p>
+            <p className="truncate text-sm font-semibold text-white">
+              {user.nome}
+            </p>
+            <p className="mt-1 truncate text-xs text-blue-100/70">
+              {user.email}
+            </p>
             <span className="mt-3 inline-flex rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-blue-50">
               {roleLabel(user.papel)}
             </span>
@@ -148,8 +139,12 @@ export function AppShell(): JSX.Element {
 
             <div className="flex items-center gap-3">
               <div className="hidden text-right sm:block">
-                <p className="text-sm font-semibold text-slate-900">{user.nome}</p>
-                <p className="text-xs text-slate-500">{roleLabel(user.papel)}</p>
+                <p className="text-sm font-semibold text-slate-900">
+                  {user.nome}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {roleLabel(user.papel)}
+                </p>
               </div>
               <Button variant="ghost" onClick={() => void logout()}>
                 <LogOut aria-hidden="true" className="h-4 w-4" />
