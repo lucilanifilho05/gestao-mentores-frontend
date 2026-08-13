@@ -174,7 +174,7 @@ export async function apiRequest<T>(
   } catch {
     throw createApiError(0, {
       message:
-        'Não foi possível conectar à API. Verifique se o backend está em execução.',
+        'Não foi possível acessar o sistema. Verifique sua conexão e tente novamente.',
     });
   }
 

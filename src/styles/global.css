@@ -10,6 +10,9 @@
   --color-primary: #0038a8;
   --color-primary-dark: #002b80;
   --color-primary-light: #e8f0ff;
+  --color-secondary: #ff7a00;
+  --color-secondary-dark: #d96200;
+  --color-secondary-light: #fff3e8;
   --color-background: #f5f7fb;
   --color-surface: #ffffff;
   --color-text: #172033;
@@ -65,12 +68,14 @@ select:focus-visible {
 
 .gm-app-background {
   background:
+    radial-gradient(circle at 8% 100%, rgba(255, 122, 0, 0.045), transparent 28rem),
     radial-gradient(circle at top right, rgba(0, 56, 168, 0.055), transparent 34rem),
     var(--color-background);
 }
 
 .gm-login-hero {
   background:
+    radial-gradient(circle at 12% 90%, rgba(255, 122, 0, 0.22), transparent 24rem),
     radial-gradient(circle at 76% 20%, rgba(255, 255, 255, 0.12), transparent 19rem),
     linear-gradient(145deg, var(--color-primary) 0%, var(--color-primary-dark) 72%);
 }
@@ -127,12 +132,44 @@ select:focus-visible {
 .gm-brand-icon {
   color: var(--color-primary);
   background: var(--color-primary-light);
+  box-shadow: inset 0 -3px 0 rgba(255, 122, 0, 0.75);
 }
 
 .gm-brand-icon-inverse {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.gm-brand-logo {
+  display: flex;
+  width: 5.5rem;
+  height: 3.25rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 0.65rem;
+  padding: 0.4rem;
+}
+
+.gm-brand-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.gm-brand-logo-inverse {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(0, 20, 64, 0.18);
+}
+
+.gm-brand-logo-surface {
+  border: 1px solid var(--color-border);
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(23, 32, 51, 0.08);
 }
 
 .gm-input {
@@ -145,6 +182,11 @@ select:focus-visible {
   padding-left: 0.9rem;
   color: var(--color-text);
   transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+/* A dedicated modifier avoids utility injection order overriding icon clearance. */
+.gm-input-leading {
+  padding-left: 2.85rem;
 }
 
 .gm-input::placeholder {
@@ -280,7 +322,7 @@ select:focus-visible {
 .gm-nav-item-active {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.14);
-  box-shadow: inset 3px 0 0 #ffffff;
+  box-shadow: inset 3px 0 0 var(--color-secondary);
 }
 
 .gm-metric-icon {

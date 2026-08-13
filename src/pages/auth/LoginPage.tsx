@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { BookOpenCheck, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
+import { LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -61,8 +61,8 @@ export function LoginPage(): JSX.Element {
     <main className="gm-app-background min-h-screen lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(520px,0.95fr)]">
       <section className="relative hidden overflow-hidden gm-login-hero p-12 lg:flex lg:flex-col lg:justify-between">
         <div className="relative z-10 flex items-center gap-3">
-          <div className="gm-brand-icon-inverse h-12 w-12">
-            <BookOpenCheck aria-hidden="true" className="h-7 w-7" />
+          <div className="gm-brand-logo gm-brand-logo-inverse">
+            <img src="/images/logo.png" alt="SENAI Ceará" />
           </div>
           <div>
             <p className="text-lg font-bold text-white">Gestão de Mentores</p>
@@ -84,15 +84,15 @@ export function LoginPage(): JSX.Element {
         </div>
 
         <p className="relative z-10 text-sm text-blue-100/60">
-          Interface beta para ambiente local ou controlado.
+          Educação e gestão conectadas em um só lugar.
         </p>
       </section>
 
       <section className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-10">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <div className="gm-brand-icon h-11 w-11">
-              <BookOpenCheck aria-hidden="true" className="h-6 w-6" />
+            <div className="gm-brand-logo gm-brand-logo-surface">
+              <img src="/images/logo.png" alt="SENAI Ceará" />
             </div>
             <div>
               <p className="font-bold text-slate-950">Gestão de Mentores</p>
@@ -148,7 +148,7 @@ export function LoginPage(): JSX.Element {
           </div>
 
           <p className="mt-5 text-center text-xs leading-5 text-slate-500">
-            O access token permanece somente em memória. O refresh token é mantido pelo backend em cookie HttpOnly.
+            Seu acesso é protegido e exclusivo para usuários autorizados.
           </p>
         </div>
       </section>

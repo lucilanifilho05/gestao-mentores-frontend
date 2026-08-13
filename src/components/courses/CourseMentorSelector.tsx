@@ -233,7 +233,7 @@ export function CourseMentorSelector({
 
               <input
                 type="search"
-                className="gm-input pl-10"
+                className="gm-input gm-input-leading"
                 maxLength={100}
                 placeholder="Nome ou e-mail do mentor"
                 value={draftSearch}

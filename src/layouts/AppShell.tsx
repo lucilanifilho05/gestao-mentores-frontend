@@ -1,5 +1,4 @@
 import {
-  BookOpenCheck,
   FolderKanban,
   Home,
   LogOut,
@@ -40,7 +39,7 @@ function getPageTitle(pathname: string): string {
     return "Cursos";
   }
 
-  return "Visão geral da sessão";
+  return "Visão geral";
 }
 
 export function AppShell(): JSX.Element {
@@ -58,11 +57,11 @@ export function AppShell(): JSX.Element {
   return (
     <div className="gm-app-background min-h-screen">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-white/10 gm-sidebar lg:flex">
-        <div className="flex h-20 items-center gap-3 border-b border-white/10 px-6">
-          <div className="gm-brand-icon-inverse h-11 w-11">
-            <BookOpenCheck aria-hidden="true" className="h-6 w-6" />
+        <div className="flex min-h-24 items-center gap-3 border-b border-white/10 px-5 py-4">
+          <div className="gm-brand-logo gm-brand-logo-inverse">
+            <img src="/images/logo.png" alt="SENAI Ceará" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-base font-bold tracking-tight text-white">
               Gestão de Mentores
             </p>

@@ -378,8 +378,7 @@ export function UsersPage(): JSX.Element {
                         </h3>
 
                         <p className="mt-1 text-sm text-slate-500">
-                            Dados carregados
-                            diretamente da API.
+                            Consulte perfis, funções e situações de acesso.
                         </p>
                     </div>
 

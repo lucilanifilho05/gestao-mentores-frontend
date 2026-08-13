@@ -334,7 +334,7 @@ export function CreateTaskDialog({
               </span>
               <textarea
                 className="gm-input h-24 py-3"
-                placeholder="Cole um link HTTP ou HTTPS por linha"
+                placeholder="Adicione um link de arquivo por linha"
                 value={links}
                 onChange={(e) => setLinks(e.target.value)}
               />

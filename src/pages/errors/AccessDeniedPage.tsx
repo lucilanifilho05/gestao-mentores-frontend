@@ -11,7 +11,7 @@ export function AccessDeniedPage(): JSX.Element {
         <p className="mt-6 text-sm font-semibold text-red-700">Acesso negado</p>
         <h2 className="mt-2 text-3xl font-bold text-slate-950">Seu papel não permite abrir esta página.</h2>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          A interface bloqueou a navegação, mas o backend continua sendo a autoridade definitiva sobre a permissão.
+          Seu perfil não possui permissão para acessar esta página. Se precisar desse acesso, procure a coordenação.
         </p>
         <Link to="/" className="gm-link mt-6 inline-flex items-center gap-2">
           <ArrowLeft aria-hidden="true" className="h-4 w-4" />

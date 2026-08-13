@@ -60,7 +60,7 @@ export function CourseFilters({
           />
 
           <input
-            className="gm-input pl-10"
+            className="gm-input gm-input-leading"
             type="search"
             maxLength={100}
             placeholder="Digite o nome do curso"

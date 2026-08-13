@@ -55,6 +55,13 @@ npm run build
 VITE_API_URL=http://localhost:3000
 ```
 
+Em produção, considerando o frontend em `https://jusana.space` e a API em
+`https://api.jusana.space`, gere o build com:
+
+```dotenv
+VITE_API_URL=https://api.jusana.space
+```
+
 ## Observação sobre a senha
 
 O DTO enviado informa que existem constantes de comprimento mínimo e máximo, mas os valores dessas constantes não foram fornecidos. Nesta etapa, o frontend valida obrigatoriedade da senha e delega os limites exatos ao backend. Assim que o OpenAPI completo ou `password-policy.ts` for enviado, o schema Zod pode espelhar os valores exatos.

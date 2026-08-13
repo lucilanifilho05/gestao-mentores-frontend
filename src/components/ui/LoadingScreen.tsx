@@ -5,7 +5,7 @@ interface LoadingScreenProps {
 }
 
 export function LoadingScreen({
-  message = 'Carregando sua sessão...',
+  message = 'Preparando seu acesso...',
 }: LoadingScreenProps): JSX.Element {
   return (
     <main className="gm-app-background flex min-h-screen items-center justify-center px-6">

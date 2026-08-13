@@ -218,7 +218,7 @@ export function CreateCourseDialog({
 
                 <input
                   type="text"
-                  className={`gm-input pl-11 ${
+                  className={`gm-input gm-input-leading ${
                     errors.nome
                       ? 'gm-input-error'
                       : ''

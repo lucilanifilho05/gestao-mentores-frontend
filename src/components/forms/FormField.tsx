@@ -46,7 +46,7 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
             id={id}
             aria-invalid={Boolean(error)}
             aria-describedby={describedBy || undefined}
-            className={`gm-input ${leadingIcon ? 'pl-11' : ''} ${error ? 'gm-input-error' : ''} ${className}`.trim()}
+            className={`gm-input ${leadingIcon ? 'gm-input-leading' : ''} ${error ? 'gm-input-error' : ''} ${className}`.trim()}
           />
         </div>
         {error ? (

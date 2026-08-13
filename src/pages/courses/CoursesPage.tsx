@@ -440,7 +440,9 @@ export function CoursesPage(): JSX.Element {
             <p className="mt-1 text-sm text-slate-500">
               {hasAppliedFilters
                 ? 'Resultado dos filtros aplicados.'
-                : 'Cursos carregados diretamente da API.'}
+                : isCoordinator
+                  ? 'Consulte e gerencie os cursos cadastrados.'
+                  : 'Consulte os cursos aos quais você está vinculado.'}
             </p>
           </div>
 
