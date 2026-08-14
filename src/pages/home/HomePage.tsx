@@ -1,13 +1,6 @@
 import { useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  CalendarClock,
-  CheckCircle2,
-  ClipboardList,
-  Clock3,
-  FilterX,
-  Paperclip,
-} from "lucide-react";
+import { AlertTriangle, ArrowRight, CalendarClock, CheckCircle2, ClipboardList, Clock3, FilterX, Paperclip, SlidersHorizontal } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,39 +11,11 @@ import { useUsers } from "@/hooks/useUsers";
 import { getErrorMessage } from "@/utils/api-error";
 
 function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(new Date(value));
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
-function Metric({
-  label,
-  value,
-  detail,
-  icon,
-  tone,
-}: {
-  label: string;
-  value: number;
-  detail: string;
-  icon: JSX.Element;
-  tone: string;
-}): JSX.Element {
-  return (
-    <article className="gm-panel relative overflow-hidden p-5">
-      <div className={`absolute inset-x-0 top-0 h-1 ${tone}`} />
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-semibold text-slate-500">{label}</p>
-          <p className="mt-2 text-3xl font-black tracking-tight text-slate-950">
-            {value}
-          </p>
-        </div>
-        <div className="rounded-xl bg-slate-50 p-2.5">{icon}</div>
-      </div>
-      <p className="mt-3 text-xs text-slate-500">{detail}</p>
-    </article>
-  );
+
+function Metric({ label, value, detail, icon, variant }: { label: string; value: number; detail: string; icon: JSX.Element; variant: "primary" | "secondary" | "danger" | "success" }): JSX.Element {
+  return <article className="gm-panel p-5"><div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-slate-500">{label}</p><p className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">{value}</p></div><div className={`gm-dashboard-metric-icon gm-dashboard-metric-${variant}`}>{icon}</div></div><p className="mt-3 text-xs leading-5 text-slate-500">{detail}</p></article>;
 }
 
 export function HomePage(): JSX.Element {
@@ -61,297 +26,42 @@ export function HomePage(): JSX.Element {
   const [mentor, setMentor] = useState("");
   const [course, setCourse] = useState("");
   const [classId, setClassId] = useState("");
-  const dashboard = useDashboardTasks({
-    inicio: inicio || undefined,
-    fim: fim || undefined,
-    mentorId: coordinator ? mentor || undefined : undefined,
-    cursoId: course || undefined,
-    turmaId: classId || undefined,
-  });
-  const courses = useCourses({
-    pagina: 1,
-    limite: 100,
-    apenas_meus: user?.papel === "MENTOR" ? true : undefined,
-  });
-  const classes = useClasses({
-    pagina: 1,
-    limite: 100,
-    cursoId: course || undefined,
-  });
-  const mentors = useUsers({
-    pagina: 1,
-    limite: 100,
-    papel: "MENTOR",
-    ativo: true,
-  });
+  const dashboard = useDashboardTasks({ inicio: inicio || undefined, fim: fim || undefined, mentorId: coordinator ? mentor || undefined : undefined, cursoId: course || undefined, turmaId: classId || undefined });
+  const courses = useCourses({ pagina: 1, limite: 100, apenas_meus: user?.papel === "MENTOR" ? true : undefined });
+  const classes = useClasses({ pagina: 1, limite: 100, cursoId: course || undefined });
+  const mentors = useUsers({ pagina: 1, limite: 100, papel: "MENTOR", ativo: true });
   const stats = useMemo(() => {
     const tasks = dashboard.data ?? [];
-    const now = Date.now();
-    const pending = tasks.filter((x) => x.status === "pendente");
-    const overdue = pending.filter(
-      (x) => new Date(x.prazoAtual).getTime() < now,
-    );
-    const done = tasks.filter((x) => x.status === "concluida");
-    const rate = tasks.length
-      ? Math.round((done.length / tasks.length) * 100)
-      : 0;
-    return {
-      tasks,
-      pending,
-      overdue,
-      done,
-      rate,
-      links: tasks.reduce((sum, x) => sum + x.quantidadeLinks, 0),
-    };
+    const pending = tasks.filter((task) => task.status === "pendente");
+    const overdue = pending.filter((task) => new Date(task.prazoAtual).getTime() < Date.now());
+    const done = tasks.filter((task) => task.status === "concluida");
+    return { tasks, pending, overdue, done, rate: tasks.length ? Math.round((done.length / tasks.length) * 100) : 0, links: tasks.reduce((sum, task) => sum + task.quantidadeLinks, 0) };
   }, [dashboard.data]);
-  const upcoming = stats.pending
-    .filter((x) => new Date(x.prazoAtual).getTime() >= Date.now())
-    .slice(0, 6);
-  const maxScope = Math.max(
-    1,
-    ...["curso", "turma", "evento_macro"].map(
-      (scope) => stats.tasks.filter((x) => x.escopo === scope).length,
-    ),
-  );
-  function clear(): void {
-    setInicio("");
-    setFim("");
-    setMentor("");
-    setCourse("");
-    setClassId("");
-  }
+  const upcoming = useMemo(() => stats.pending.filter((task) => new Date(task.prazoAtual).getTime() >= Date.now()).sort((a, b) => new Date(a.prazoAtual).getTime() - new Date(b.prazoAtual).getTime()).slice(0, 5), [stats.pending]);
+  const scopeData = ([ ["curso", "Curso"], ["turma", "Turma"], ["evento_macro", "Evento macro"] ] as const).map(([scope, label]) => ({ scope, label, count: stats.tasks.filter((task) => task.escopo === scope).length }));
+  const maxScope = Math.max(1, ...scopeData.map((item) => item.count));
+  const hasFilters = Boolean(inicio || fim || mentor || course || classId);
+  function clearFilters(): void { setInicio(""); setFim(""); setMentor(""); setCourse(""); setClassId(""); }
   if (!user) return <></>;
-  return (
-    <div className="mx-auto max-w-[1500px] space-y-6">
-      <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <p className="text-sm font-semibold gm-text-primary">
-            Visão operacional
-          </p>
-          <h2 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Olá, {user.nome.split(" ")[0]}
-          </h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Acompanhe o volume, os prazos e a evolução das tarefas em um único
-            painel.
-          </p>
-        </div>
-        {dashboard.isFetching ? (
-          <span className="text-sm font-semibold gm-text-primary">
-            Atualizando indicadores…
-          </span>
-        ) : (
-          <span className="text-sm text-slate-500">
-            {stats.tasks.length} tarefas no recorte atual
-          </span>
-        )}
-      </section>
-      <section className="gm-panel p-5">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <label>
-            <span className="mb-2 block text-xs font-bold uppercase text-slate-500">
-              De
-            </span>
-            <input
-              className="gm-input"
-              type="date"
-              value={inicio}
-              max={fim || undefined}
-              onChange={(e) => setInicio(e.target.value)}
-            />
-          </label>
-          <label>
-            <span className="mb-2 block text-xs font-bold uppercase text-slate-500">
-              Até
-            </span>
-            <input
-              className="gm-input"
-              type="date"
-              value={fim}
-              min={inicio || undefined}
-              onChange={(e) => setFim(e.target.value)}
-            />
-          </label>
-          {coordinator ? (
-            <label>
-              <span className="mb-2 block text-xs font-bold uppercase text-slate-500">
-                Mentor
-              </span>
-              <select
-                className="gm-input"
-                value={mentor}
-                onChange={(e) => setMentor(e.target.value)}
-              >
-                <option value="">Todos</option>
-                {mentors.data?.data.map((x) => (
-                  <option key={x.id} value={x.id}>
-                    {x.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-          <label>
-            <span className="mb-2 block text-xs font-bold uppercase text-slate-500">
-              Curso
-            </span>
-            <select
-              className="gm-input"
-              value={course}
-              onChange={(e) => {
-                setCourse(e.target.value);
-                setClassId("");
-              }}
-            >
-              <option value="">Todos</option>
-              {courses.data?.data.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span className="mb-2 block text-xs font-bold uppercase text-slate-500">
-              Turma
-            </span>
-            <select
-              className="gm-input"
-              value={classId}
-              onChange={(e) => setClassId(e.target.value)}
-            >
-              <option value="">Todas</option>
-              {classes.data?.data.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.codigo}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        {inicio || fim || mentor || course || classId ? (
-          <Button className="mt-4" variant="secondary" onClick={clear}>
-            <FilterX className="h-4 w-4" />
-            Limpar filtros
-          </Button>
-        ) : null}
-      </section>
-      {dashboard.isError ? (
-        <Alert variant="error" title="Não foi possível carregar o dashboard">
-          {getErrorMessage(dashboard.error)}
-        </Alert>
-      ) : null}
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric
-          label="Total de tarefas"
-          value={stats.tasks.length}
-          detail="No período e filtros selecionados"
-          icon={<ClipboardList className="h-5 w-5 text-blue-700" />}
-          tone="bg-blue-600"
-        />
-        <Metric
-          label="Pendentes"
-          value={stats.pending.length}
-          detail="Aguardando conclusão"
-          icon={<Clock3 className="h-5 w-5 text-amber-700" />}
-          tone="bg-amber-500"
-        />
-        <Metric
-          label="Atrasadas"
-          value={stats.overdue.length}
-          detail="Prazo atual já vencido"
-          icon={<AlertTriangle className="h-5 w-5 text-red-700" />}
-          tone="bg-red-600"
-        />
-        <Metric
-          label="Concluídas"
-          value={stats.done.length}
-          detail={`${stats.rate}% de conclusão`}
-          icon={<CheckCircle2 className="h-5 w-5 text-emerald-700" />}
-          tone="bg-emerald-600"
-        />
-      </section>
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <section className="gm-panel overflow-hidden">
-          <div className="border-b gm-border px-5 py-4">
-            <h3 className="font-bold text-slate-950">Próximas entregas</h3>
-            <p className="mt-1 text-sm text-slate-500">
-              Tarefas pendentes ordenadas pelo prazo
-            </p>
-          </div>
-          <div className="divide-y gm-border">
-            {upcoming.map((task) => (
-              <div
-                key={task.id}
-                className="flex flex-col justify-between gap-3 px-5 py-4 sm:flex-row sm:items-center"
-              >
-                <div>
-                  <p className="font-semibold text-slate-950">{task.titulo}</p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {task.responsavel.nome} ·{" "}
-                    {task.turma?.codigo ?? task.curso?.nome ?? "Evento macro"}
-                  </p>
-                </div>
-                <span className="inline-flex items-center gap-2 text-sm font-bold text-slate-700">
-                  <CalendarClock className="h-4 w-4 text-slate-400" />
-                  {formatDate(task.prazoAtual)}
-                </span>
-              </div>
-            ))}
-            {upcoming.length === 0 ? (
-              <p className="p-8 text-center text-sm text-slate-500">
-                Nenhuma entrega futura neste recorte.
-              </p>
-            ) : null}
-          </div>
-        </section>
-        <section className="gm-panel p-5">
-          <h3 className="font-bold text-slate-950">Distribuição por escopo</h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Onde as tarefas estão concentradas
-          </p>
-          <div className="mt-6 space-y-5">
-            {(
-              [
-                ["curso", "Curso"],
-                ["turma", "Turma"],
-                ["evento_macro", "Evento macro"],
-              ] as const
-            ).map(([scope, label]) => {
-              const count = stats.tasks.filter(
-                (x) => x.escopo === scope,
-              ).length;
-              return (
-                <div key={scope}>
-                  <div className="mb-2 flex justify-between text-sm">
-                    <span className="font-semibold text-slate-700">
-                      {label}
-                    </span>
-                    <strong>{count}</strong>
-                  </div>
-                  <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="h-full rounded-full bg-blue-600"
-                      style={{ width: `${(count / maxScope) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-7 flex items-center gap-3 rounded-xl bg-blue-50 p-4">
-            <Paperclip className="h-5 w-5 gm-text-primary" />
-            <div>
-              <p className="text-2xl font-black text-slate-950">
-                {stats.links}
-              </p>
-              <p className="text-xs text-slate-600">
-                links adicionados às tarefas
-              </p>
-            </div>
-          </div>
-        </section>
-      </div>
+
+  return <div className="mx-auto max-w-[1440px] space-y-6">
+    <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><p className="gm-eyebrow">Visão geral</p><h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Olá, {user.nome.split(" ")[0]}</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Acompanhe prioridades, entregas e o andamento do trabalho em um só lugar.</p></div><Link className="gm-link inline-flex items-center gap-2 self-start md:self-auto" to="/tarefas">Ver todas as tarefas <ArrowRight className="h-4 w-4" /></Link></section>
+
+    <section className="gm-dashboard-summary overflow-hidden rounded-2xl p-6 sm:p-7"><div className="relative z-10 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center"><div><p className="text-sm font-semibold text-blue-100">Progresso no período</p><div className="mt-3 flex flex-wrap items-end gap-x-3 gap-y-1"><strong className="text-4xl font-extrabold tracking-tight text-white">{stats.rate}%</strong><span className="pb-1 text-sm text-blue-100">das tarefas concluídas</span></div><div className="mt-5 h-2 max-w-2xl overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full gm-bg-secondary" style={{ width: `${stats.rate}%` }} /></div><p className="mt-3 text-xs text-blue-100/80">{dashboard.isFetching ? "Atualizando informações…" : `${stats.tasks.length} tarefas consideradas no recorte atual`}</p></div><div className="grid grid-cols-2 gap-3 sm:flex"><div className="rounded-xl border border-white/10 bg-white/10 px-4 py-3"><p className="text-xs text-blue-100">Em andamento</p><p className="mt-1 text-2xl font-bold text-white">{stats.pending.length}</p></div><div className="rounded-xl border border-orange-300/20 bg-orange-400/15 px-4 py-3"><p className="text-xs text-orange-100">Precisam de atenção</p><p className="mt-1 text-2xl font-bold text-white">{stats.overdue.length}</p></div></div></div></section>
+
+    <details className="gm-panel group p-5" open={hasFilters}><summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-slate-800"><span className="inline-flex items-center gap-2"><SlidersHorizontal className="h-4 w-4 gm-text-primary" />Refinar indicadores</span><span className="text-xs font-medium text-slate-500">{hasFilters ? "Filtros aplicados" : "Opcional"}</span></summary><div className="mt-5 grid gap-4 border-t gm-border pt-5 sm:grid-cols-2 lg:grid-cols-5">
+      <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">De</span><input className="gm-input" type="date" value={inicio} max={fim || undefined} onChange={(e) => setInicio(e.target.value)} /></label>
+      <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Até</span><input className="gm-input" type="date" value={fim} min={inicio || undefined} onChange={(e) => setFim(e.target.value)} /></label>
+      {coordinator ? <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Mentor</span><select className="gm-input" value={mentor} onChange={(e) => setMentor(e.target.value)}><option value="">Todos</option>{mentors.data?.data.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label> : null}
+      <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Curso</span><select className="gm-input" value={course} onChange={(e) => { setCourse(e.target.value); setClassId(""); }}><option value="">Todos</option>{courses.data?.data.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+      <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Turma</span><select className="gm-input" value={classId} onChange={(e) => setClassId(e.target.value)}><option value="">Todas</option>{classes.data?.data.map((item) => <option key={item.id} value={item.id}>{item.codigo}</option>)}</select></label>
+    </div>{hasFilters ? <Button className="mt-4" variant="secondary" onClick={clearFilters}><FilterX className="h-4 w-4" />Limpar filtros</Button> : null}</details>
+
+    {dashboard.isError ? <Alert variant="error" title="Não foi possível carregar os indicadores">{getErrorMessage(dashboard.error)}</Alert> : null}
+    {dashboard.isLoading ? <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Carregando indicadores">{[1, 2, 3, 4].map((item) => <div key={item} className="h-36 animate-pulse rounded-2xl bg-slate-200/60" />)}</section> : <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Total de tarefas" value={stats.tasks.length} detail="No período selecionado" icon={<ClipboardList className="h-5 w-5" />} variant="primary" /><Metric label="Pendentes" value={stats.pending.length} detail="Aguardando conclusão" icon={<Clock3 className="h-5 w-5" />} variant="secondary" /><Metric label="Atrasadas" value={stats.overdue.length} detail="Com prazo vencido" icon={<AlertTriangle className="h-5 w-5" />} variant="danger" /><Metric label="Concluídas" value={stats.done.length} detail={`${stats.rate}% do total`} icon={<CheckCircle2 className="h-5 w-5" />} variant="success" /></section>}
+
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]"><section className="gm-panel overflow-hidden"><div className="flex items-start justify-between gap-4 border-b gm-border px-5 py-4 sm:px-6"><div><h3 className="font-bold text-slate-950">Próximas entregas</h3><p className="mt-1 text-sm text-slate-500">Prioridades organizadas pelo prazo mais próximo</p></div><CalendarClock className="h-5 w-5 text-slate-400" /></div><div className="divide-y gm-border">{upcoming.map((task, index) => <div key={task.id} className="flex flex-col justify-between gap-3 px-5 py-4 sm:flex-row sm:items-center sm:px-6"><div className="flex min-w-0 items-start gap-3"><span className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${index === 0 ? "gm-secondary-badge" : "bg-slate-100 text-slate-500"}`}>{index + 1}</span><div className="min-w-0"><p className="truncate font-semibold text-slate-950">{task.titulo}</p><p className="mt-1 truncate text-xs text-slate-500">{task.responsavel.nome} · {task.turma?.codigo ?? task.curso?.nome ?? "Evento macro"}</p></div></div><span className="inline-flex shrink-0 items-center gap-2 pl-10 text-sm font-semibold text-slate-700 sm:pl-0"><CalendarClock className="h-4 w-4 text-slate-400" />{formatDate(task.prazoAtual)}</span></div>)}{upcoming.length === 0 ? <div className="px-6 py-12 text-center"><CheckCircle2 className="mx-auto h-8 w-8 text-emerald-500" /><p className="mt-3 font-semibold text-slate-800">Nenhuma entrega futura</p><p className="mt-1 text-sm text-slate-500">Não há tarefas pendentes para o período selecionado.</p></div> : null}</div></section>
+      <section className="gm-panel p-5 sm:p-6"><h3 className="font-bold text-slate-950">Distribuição das tarefas</h3><p className="mt-1 text-sm text-slate-500">Quantidade por tipo de escopo</p><div className="mt-6 space-y-5">{scopeData.map((item, index) => <div key={item.scope}><div className="mb-2 flex justify-between text-sm"><span className="font-semibold text-slate-700">{item.label}</span><strong className="text-slate-950">{item.count}</strong></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className={index === 1 ? "h-full rounded-full gm-bg-secondary" : "h-full rounded-full bg-blue-700"} style={{ width: `${(item.count / maxScope) * 100}%` }} /></div></div>)}</div><div className="mt-7 flex items-center gap-3 rounded-xl gm-secondary-surface p-4"><span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-orange-600 shadow-sm"><Paperclip className="h-5 w-5" /></span><div><p className="text-2xl font-extrabold text-slate-950">{stats.links}</p><p className="text-xs text-slate-600">links adicionados às tarefas</p></div></div></section>
     </div>
-  );
+  </div>;
 }

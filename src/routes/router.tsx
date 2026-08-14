@@ -16,6 +16,7 @@ import { ClassesPage } from "@/pages/classes/ClassesPage";
 import { TasksPage } from "@/pages/tasks/TasksPage";
 import { ActivityTypesPage } from "@/pages/activity-types/ActivityTypesPage";
 import { ProjectsPage } from "@/pages/projects/ProjectsPage";
+import { ProjectDetailsPage } from "@/pages/projects/ProjectDetailsPage";
 
 export const router = createBrowserRouter([
   {
@@ -65,6 +66,11 @@ export const router = createBrowserRouter([
           {
             path: "projetos",
             element: <ProjectsPage />,
+          },
+
+          {
+            path: "projetos/:projetoId",
+            element: <ProjectDetailsPage />,
           },
 
           {

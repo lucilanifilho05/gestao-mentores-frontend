@@ -31,6 +31,12 @@ export interface TarefaResumo {
   quantidadeReagendamentos: number;
   links: string[];
 }
+export interface CriarTarefasMacroResponse {
+  quantidadeCriada: number;
+  titulo: string;
+  tarefas: TarefaDetalhe[];
+}
+export type CriarTarefaResponse = TarefaDetalhe | CriarTarefasMacroResponse;
 export interface ReagendamentoTarefa {
   id: string;
   prazoAnterior: string;
@@ -61,7 +67,7 @@ export interface CriarTarefaDto {
   tipoAtividadeId: string;
   titulo: string;
   descricao?: string;
-  responsavelId: string;
+  responsavelId?: string;
   escopo: EscopoTarefa;
   cursoId?: string;
   turmaId?: string;

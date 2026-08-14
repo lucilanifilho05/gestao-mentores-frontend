@@ -61,7 +61,8 @@ select {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+textarea:focus-visible {
   outline: 3px solid rgba(0, 56, 168, 0.22);
   outline-offset: 2px;
 }
@@ -120,6 +121,71 @@ select:focus-visible {
 .gm-text-primary {
   color: var(--color-primary);
 }
+
+.gm-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.gm-eyebrow::before {
+  width: 1.5rem;
+  height: 0.2rem;
+  border-radius: 999px;
+  background: var(--color-secondary);
+  content: "";
+}
+
+.gm-bg-secondary { background: var(--color-secondary); }
+
+.gm-secondary-surface {
+  border: 1px solid #ffd6b0;
+  background: var(--color-secondary-light);
+}
+
+.gm-secondary-badge {
+  color: #9a4300;
+  background: var(--color-secondary-light);
+}
+
+.gm-dashboard-summary {
+  position: relative;
+  background:
+    radial-gradient(circle at 92% 10%, rgba(255, 122, 0, 0.25), transparent 18rem),
+    linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  box-shadow: 0 18px 40px rgba(0, 43, 128, 0.18);
+}
+
+.gm-dashboard-summary::after {
+  position: absolute;
+  width: 15rem;
+  height: 15rem;
+  right: -7rem;
+  bottom: -10rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  content: "";
+}
+
+.gm-dashboard-metric-icon {
+  display: flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.8rem;
+}
+
+.gm-dashboard-metric-primary { color: var(--color-primary); background: var(--color-primary-light); }
+.gm-dashboard-metric-secondary { color: #a84b00; background: var(--color-secondary-light); }
+.gm-dashboard-metric-danger { color: var(--color-danger); background: #fef2f2; }
+.gm-dashboard-metric-success { color: var(--color-success); background: #ecfdf3; }
 
 .gm-brand-icon,
 .gm-brand-icon-inverse {

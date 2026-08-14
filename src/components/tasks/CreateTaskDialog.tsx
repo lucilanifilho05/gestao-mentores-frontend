@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
 import { useClasses } from "@/hooks/useClasses";
 import { useCourses } from "@/hooks/useCourses";
+import { useCourseMentors } from "@/hooks/useCourseMentors";
 import { useActivityTypes, useCreateTask } from "@/hooks/useTasks";
-import { useUsers } from "@/hooks/useUsers";
 import { useProjects } from "@/hooks/useProjects";
-import type { EscopoTarefa, TarefaDetalhe } from "@/types/tasks.types";
+import type { CriarTarefaResponse, EscopoTarefa } from "@/types/tasks.types";
 import { getErrorMessage } from "@/utils/api-error";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onCreated: (task: TarefaDetalhe) => void;
+  onCreated: (result: CriarTarefaResponse) => void;
   initialProjectId?: string;
 }
 const inputClass = "gm-input";
@@ -52,12 +52,7 @@ export function CreateTaskDialog({
     cursoId: curso || undefined,
     ativo: true,
   });
-  const mentors = useUsers({
-    pagina: 1,
-    limite: 100,
-    papel: "MENTOR",
-    ativo: true,
-  });
+  const mentors = useCourseMentors(escopo === "evento_macro" ? "" : curso);
   useEffect(() => {
     if (open) {
       setTitulo("");
@@ -82,7 +77,7 @@ export function CreateTaskDialog({
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setValidation(null);
-    if (!titulo.trim() || !projeto || !tipo || !responsavel || !prazo) {
+    if (!titulo.trim() || !projeto || !tipo || !prazo) {
       setValidation("Preencha os campos obrigatórios.");
       return;
     }
@@ -92,6 +87,10 @@ export function CreateTaskDialog({
     }
     if (escopo === "turma" && !turma) {
       setValidation("Selecione a turma da tarefa.");
+      return;
+    }
+    if (escopo !== "evento_macro" && !responsavel) {
+      setValidation("Selecione o responsável pela tarefa.");
       return;
     }
     if (inicio && prazo < inicio) {
@@ -104,7 +103,7 @@ export function CreateTaskDialog({
         titulo: titulo.trim(),
         descricao: descricao.trim() || undefined,
         tipoAtividadeId: tipo,
-        responsavelId: responsavel,
+        responsavelId: escopo === "evento_macro" ? undefined : responsavel,
         escopo,
         cursoId: escopo === "evento_macro" ? undefined : curso,
         turmaId: escopo === "turma" ? turma : undefined,
@@ -208,11 +207,14 @@ export function CreateTaskDialog({
                   setEscopo(e.target.value as EscopoTarefa);
                   setCurso("");
                   setTurma("");
+                  setResponsavel("");
                 }}
               >
                 <option value="curso">Curso</option>
                 <option value="turma">Turma</option>
-                <option value="evento_macro">Evento macro</option>
+                {user?.papel === "COORDENADORA" ? (
+                  <option value="evento_macro">Evento macro</option>
+                ) : null}
               </select>
             </label>
             {escopo !== "evento_macro" ? (
@@ -226,6 +228,7 @@ export function CreateTaskDialog({
                   onChange={(e) => {
                     setCurso(e.target.value);
                     setTurma("");
+                    setResponsavel("");
                   }}
                 >
                   <option value="">Selecione</option>
@@ -275,13 +278,13 @@ export function CreateTaskDialog({
                 ))}
               </select>
             </label>
-            <label>
+            {escopo !== "evento_macro" ? <label>
               <span className="mb-2 block text-sm font-semibold">
                 Responsável *
               </span>
               <select
                 className={inputClass}
-                disabled={user?.papel === "MENTOR"}
+                disabled={user?.papel === "MENTOR" || !curso || mentors.isLoading}
                 value={responsavel}
                 onChange={(e) => setResponsavel(e.target.value)}
               >
@@ -289,14 +292,23 @@ export function CreateTaskDialog({
                 {user?.papel === "MENTOR" ? (
                   <option value={user.id}>{user.nome}</option>
                 ) : (
-                  mentors.data?.data.map((x) => (
+                  mentors.data?.map((x) => (
                     <option key={x.id} value={x.id}>
                       {x.nome}
                     </option>
                   ))
                 )}
               </select>
-            </label>
+              {curso && !mentors.isLoading && mentors.data?.length === 0 ? (
+                <span className="mt-1 block text-xs text-amber-700">
+                  Este curso não possui mentores ativos vinculados.
+                </span>
+              ) : null}
+            </label> : (
+              <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                Esta tarefa será criada para todos os mentores ativos.
+              </div>
+            )}
             <label>
               <span className="mb-2 block text-sm font-semibold">Início</span>
               <input

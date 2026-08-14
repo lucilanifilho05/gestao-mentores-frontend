@@ -1,6 +1,7 @@
 import { apiRequest } from "@/api/client";
 import type {
   CriarTarefaDto,
+  CriarTarefaResponse,
   ListarTarefasParams,
   ListarTarefasResponse,
   TarefaDetalhe,
@@ -21,7 +22,7 @@ export const tasksApi = {
   buscar: (id: string) =>
     apiRequest<TarefaDetalhe>(`/tarefas/${encodeURIComponent(id)}`),
   criar: (payload: CriarTarefaDto) =>
-    apiRequest<TarefaDetalhe>("/tarefas", { method: "POST", body: payload }),
+    apiRequest<CriarTarefaResponse>("/tarefas", { method: "POST", body: payload }),
   concluir: (id: string) =>
     apiRequest<TarefaDetalhe>(`/tarefas/${encodeURIComponent(id)}/concluir`, {
       method: "POST",

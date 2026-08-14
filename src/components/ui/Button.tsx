@@ -33,7 +33,7 @@ export function Button({
       className={`gm-button ${variantClasses[variant]} ${className}`.trim()}
     >
       {isLoading ? <LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" /> : null}
-      <span>{children}</span>
+      <span className="inline-flex items-center justify-center gap-2">{children}</span>
     </button>
   );
 }
