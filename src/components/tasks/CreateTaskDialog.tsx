@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -20,6 +20,15 @@ interface Props {
   initialProjectId?: string;
 }
 const inputClass = "gm-input";
+type TaskField =
+  | "projeto"
+  | "titulo"
+  | "tipo"
+  | "curso"
+  | "turma"
+  | "responsavel"
+  | "responsavelIds"
+  | "prazo";
 export function CreateTaskDialog({
   open,
   onClose,
@@ -28,6 +37,7 @@ export function CreateTaskDialog({
 }: Props): JSX.Element | null {
   const { user } = useAuth();
   const mutation = useCreateTask();
+  const formBodyRef = useRef<HTMLDivElement>(null);
   const [titulo, setTitulo] = useState("");
   const [projeto, setProjeto] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -41,6 +51,9 @@ export function CreateTaskDialog({
   const [inicio, setInicio] = useState("");
   const [prazo, setPrazo] = useState("");
   const [validation, setValidation] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<TaskField, string>>
+  >({});
   const types = useActivityTypes();
   const projects = useProjects({ pagina: 1, limite: 100 });
   const courses = useCourses({
@@ -77,6 +90,7 @@ export function CreateTaskDialog({
       setInicio("");
       setPrazo("");
       setValidation(null);
+      setFieldErrors({});
       mutation.reset();
     }
   }, [open]);
@@ -84,31 +98,40 @@ export function CreateTaskDialog({
   const close = () => {
     if (!mutation.isPending) onClose();
   };
+  const clearFieldError = (field: TaskField) => {
+    setFieldErrors((current) => ({ ...current, [field]: undefined }));
+  };
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setValidation(null);
-    if (!titulo.trim() || !projeto || !tipo || !prazo) {
-      setValidation("Preencha os campos obrigatórios.");
-      return;
-    }
+    const errors: Partial<Record<TaskField, string>> = {};
+    if (!projeto) errors.projeto = "Selecione o projeto da tarefa.";
+    if (!titulo.trim()) errors.titulo = "Informe o título da tarefa.";
+    if (!tipo) errors.tipo = "Selecione o tipo de atividade.";
+    if (!prazo) errors.prazo = "Informe o prazo final da tarefa.";
     if (escopo !== "evento_macro" && !curso) {
-      setValidation("Selecione o curso da tarefa.");
-      return;
+      errors.curso = "Selecione o curso da tarefa.";
     }
     if (escopo === "turma" && !turma) {
-      setValidation("Selecione a turma da tarefa.");
-      return;
+      errors.turma = "Selecione a turma da tarefa.";
     }
     if (escopo !== "evento_macro" && !responsavel) {
-      setValidation("Selecione o responsável pela tarefa.");
-      return;
+      errors.responsavel = "Selecione o responsável pela tarefa.";
     }
     if (escopo === "evento_macro" && responsavelIds.length === 0) {
-      setValidation("Selecione pelo menos um mentor responsável.");
-      return;
+      errors.responsavelIds = "Selecione pelo menos um mentor responsável.";
     }
-    if (inicio && prazo < inicio) {
-      setValidation("O prazo final não pode ser anterior ao inicial.");
+    if (inicio && prazo && prazo < inicio) {
+      errors.prazo = "O prazo final não pode ser anterior ao prazo inicial.";
+    }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setValidation("Existem campos obrigatórios ou inválidos. Confira as mensagens abaixo.");
+      requestAnimationFrame(() => {
+        formBodyRef.current
+          ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
       return;
     }
     try {
@@ -136,18 +159,18 @@ export function CreateTaskDialog({
   }
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/55 px-4 py-8"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-2 sm:p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) close();
       }}
     >
       <div
-        className="gm-panel w-full max-w-3xl overflow-hidden"
+        className="gm-panel flex max-h-[calc(100vh-1rem)] w-full max-w-3xl flex-col overflow-hidden sm:max-h-[calc(100vh-2rem)]"
         role="dialog"
         aria-modal="true"
       >
-        <div className="flex justify-between border-b gm-border px-6 py-5">
+        <div className="shrink-0 flex justify-between border-b gm-border px-6 py-5">
           <div>
             <p className="text-sm font-semibold gm-text-primary">Backlog</p>
             <h2 className="mt-1 text-xl font-bold">Criar tarefa</h2>
@@ -164,8 +187,8 @@ export function CreateTaskDialog({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <form onSubmit={(e) => void submit(e)}>
-          <div className="grid gap-5 px-6 py-6 sm:grid-cols-2">
+        <form className="flex min-h-0 flex-1 flex-col" onSubmit={(e) => void submit(e)}>
+          <div ref={formBodyRef} className="grid min-h-0 flex-1 gap-5 overflow-y-auto px-6 py-6 sm:grid-cols-2">
             {validation ? (
               <div className="sm:col-span-2">
                 <Alert variant="error" title="Revise os dados">
@@ -185,10 +208,11 @@ export function CreateTaskDialog({
                 Projeto *
               </span>
               <select
-                className="gm-input"
+                className={`${inputClass} ${fieldErrors.projeto ? "gm-input-error" : ""}`}
+                aria-invalid={Boolean(fieldErrors.projeto)}
                 disabled={Boolean(initialProjectId)}
                 value={projeto}
-                onChange={(e) => setProjeto(e.target.value)}
+                onChange={(e) => { setProjeto(e.target.value); clearFieldError("projeto"); }}
               >
                 <option value="">Selecione</option>
                 {projects.data?.data
@@ -203,15 +227,18 @@ export function CreateTaskDialog({
                     </option>
                   ))}
               </select>
+              <FieldError message={fieldErrors.projeto} />
             </label>
             <label className="sm:col-span-2">
               <span className="mb-2 block text-sm font-semibold">Título *</span>
               <input
-                className={inputClass}
+                className={`${inputClass} ${fieldErrors.titulo ? "gm-input-error" : ""}`}
+                aria-invalid={Boolean(fieldErrors.titulo)}
                 maxLength={200}
                 value={titulo}
-                onChange={(e) => setTitulo(e.target.value)}
+                onChange={(e) => { setTitulo(e.target.value); clearFieldError("titulo"); }}
               />
+              <FieldError message={fieldErrors.titulo} />
             </label>
             <label>
               <span className="mb-2 block text-sm font-semibold">Escopo *</span>
@@ -224,6 +251,8 @@ export function CreateTaskDialog({
                   setTurma("");
                   setResponsavel("");
                   setResponsavelIds([]);
+                  setFieldErrors({});
+                  setValidation(null);
                 }}
               >
                 <option value="curso">Curso</option>
@@ -239,12 +268,14 @@ export function CreateTaskDialog({
                   Curso *
                 </span>
                 <select
-                  className={inputClass}
+                  className={`${inputClass} ${fieldErrors.curso ? "gm-input-error" : ""}`}
+                  aria-invalid={Boolean(fieldErrors.curso)}
                   value={curso}
                   onChange={(e) => {
                     setCurso(e.target.value);
                     setTurma("");
                     setResponsavel("");
+                    clearFieldError("curso");
                   }}
                 >
                   <option value="">Selecione</option>
@@ -254,6 +285,7 @@ export function CreateTaskDialog({
                     </option>
                   ))}
                 </select>
+                <FieldError message={fieldErrors.curso} />
               </label>
             ) : (
               <div />
@@ -264,9 +296,10 @@ export function CreateTaskDialog({
                   Turma *
                 </span>
                 <select
-                  className={inputClass}
+                  className={`${inputClass} ${fieldErrors.turma ? "gm-input-error" : ""}`}
+                  aria-invalid={Boolean(fieldErrors.turma)}
                   value={turma}
-                  onChange={(e) => setTurma(e.target.value)}
+                  onChange={(e) => { setTurma(e.target.value); clearFieldError("turma"); }}
                 >
                   <option value="">Selecione</option>
                   {classes.data?.data.map((x) => (
@@ -275,6 +308,7 @@ export function CreateTaskDialog({
                     </option>
                   ))}
                 </select>
+                <FieldError message={fieldErrors.turma} />
               </label>
             ) : null}
             <label>
@@ -282,9 +316,10 @@ export function CreateTaskDialog({
                 Tipo de atividade *
               </span>
               <select
-                className={inputClass}
+                className={`${inputClass} ${fieldErrors.tipo ? "gm-input-error" : ""}`}
+                aria-invalid={Boolean(fieldErrors.tipo)}
                 value={tipo}
-                onChange={(e) => setTipo(e.target.value)}
+                onChange={(e) => { setTipo(e.target.value); clearFieldError("tipo"); }}
               >
                 <option value="">Selecione</option>
                 {types.data?.data.map((x) => (
@@ -293,16 +328,18 @@ export function CreateTaskDialog({
                   </option>
                 ))}
               </select>
+              <FieldError message={fieldErrors.tipo} />
             </label>
             {escopo !== "evento_macro" ? <label>
               <span className="mb-2 block text-sm font-semibold">
                 Responsável *
               </span>
               <select
-                className={inputClass}
+                className={`${inputClass} ${fieldErrors.responsavel ? "gm-input-error" : ""}`}
+                aria-invalid={Boolean(fieldErrors.responsavel)}
                 disabled={user?.papel === "MENTOR" || !curso || mentors.isLoading}
                 value={responsavel}
-                onChange={(e) => setResponsavel(e.target.value)}
+                onChange={(e) => { setResponsavel(e.target.value); clearFieldError("responsavel"); }}
               >
                 <option value="">Selecione</option>
                 {user?.papel === "MENTOR" ? (
@@ -315,6 +352,7 @@ export function CreateTaskDialog({
                   ))
                 )}
               </select>
+              <FieldError message={fieldErrors.responsavel} />
               {curso && !mentors.isLoading && mentors.data?.length === 0 ? (
                 <span className="mt-1 block text-xs text-amber-700">
                   Este curso não possui mentores ativos vinculados.
@@ -327,7 +365,8 @@ export function CreateTaskDialog({
                 selectedIds={responsavelIds}
                 isLoading={macroMentors.isLoading}
                 isError={macroMentors.isError}
-                onChange={setResponsavelIds}
+                error={fieldErrors.responsavelIds}
+                onChange={(ids) => { setResponsavelIds(ids); clearFieldError("responsavelIds"); }}
               />
             ) : null}
             <label>
@@ -344,11 +383,13 @@ export function CreateTaskDialog({
                 Prazo final *
               </span>
               <input
-                className={inputClass}
+                className={`${inputClass} ${fieldErrors.prazo ? "gm-input-error" : ""}`}
+                aria-invalid={Boolean(fieldErrors.prazo)}
                 type="datetime-local"
                 value={prazo}
-                onChange={(e) => setPrazo(e.target.value)}
+                onChange={(e) => { setPrazo(e.target.value); clearFieldError("prazo"); }}
               />
+              <FieldError message={fieldErrors.prazo} />
             </label>
             <label className="sm:col-span-2">
               <span className="mb-2 block text-sm font-semibold">
@@ -377,7 +418,7 @@ export function CreateTaskDialog({
               </span>
             </label>
           </div>
-          <div className="flex justify-end gap-3 border-t gm-border bg-slate-50/70 px-6 py-4">
+          <div className="flex shrink-0 justify-end gap-3 border-t gm-border bg-slate-50/70 px-6 py-4">
             <Button
               variant="secondary"
               disabled={mutation.isPending}
@@ -402,12 +443,14 @@ function MacroMentorSelector({
   selectedIds,
   isLoading,
   isError,
+  error,
   onChange,
 }: {
   mentors: UsuarioListado[];
   selectedIds: string[];
   isLoading: boolean;
   isError: boolean;
+  error?: string;
   onChange: (ids: string[]) => void;
 }): JSX.Element {
   const allSelected = mentors.length > 0 && selectedIds.length === mentors.length;
@@ -426,7 +469,10 @@ function MacroMentorSelector({
           </button>
         ) : null}
       </div>
-      <div className="max-h-52 overflow-y-auto rounded-xl border gm-border bg-white p-2">
+      <div
+        className={`max-h-52 overflow-y-auto rounded-xl border bg-white p-2 ${error ? "border-red-500" : "gm-border"}`}
+        aria-invalid={Boolean(error)}
+      >
         {isLoading ? (
           <p className="p-3 text-sm text-slate-500">Carregando mentores...</p>
         ) : null}
@@ -468,9 +514,20 @@ function MacroMentorSelector({
           </p>
         ) : null}
       </div>
+      <FieldError message={error} />
       <span className="mt-1 block text-xs text-slate-500">
         Será criada uma tarefa individual para cada mentor selecionado.
       </span>
     </fieldset>
+  );
+}
+
+function FieldError({ message }: { message?: string }): JSX.Element | null {
+  if (!message) return null;
+
+  return (
+    <p className="mt-1.5 whitespace-normal break-words text-sm leading-5 text-red-700">
+      {message}
+    </p>
   );
 }

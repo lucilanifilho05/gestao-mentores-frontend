@@ -24,9 +24,9 @@ export function Alert({
   return (
     <div className={`gm-alert gm-alert-${variant}`} role={variant === 'error' ? 'alert' : 'status'}>
       <Icon aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
-      <div>
+      <div className="min-w-0 flex-1">
         {title ? <p className="font-semibold">{title}</p> : null}
-        <div className="text-sm leading-6">{children}</div>
+        <div className="whitespace-normal break-words text-sm leading-6">{children}</div>
       </div>
     </div>
   );
