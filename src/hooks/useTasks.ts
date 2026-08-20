@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { tasksApi } from "@/api/tasks.api";
-import type { CriarTarefaDto, ListarTarefasParams } from "@/types/tasks.types";
+import type { AtualizarTarefaDto, CriarTarefaDto, ListarTarefasParams } from "@/types/tasks.types";
 export const tasksKeys = {
   all: ["tarefas"] as const,
   list: (params: ListarTarefasParams) => ["tarefas", "lista", params] as const,
@@ -72,6 +72,14 @@ export function useCompleteTask() {
   const invalidate = invalidator();
   return useMutation({
     mutationFn: (id: string) => tasksApi.concluir(id),
+    onSuccess: invalidate,
+  });
+}
+export function useUpdateTask() {
+  const invalidate = invalidator();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: AtualizarTarefaDto }) =>
+      tasksApi.atualizar(id, payload),
     onSuccess: invalidate,
   });
 }

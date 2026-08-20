@@ -76,6 +76,12 @@ export interface CriarTarefaDto {
   prazoAtual: string;
   links?: string[];
 }
+export interface AtualizarTarefaDto {
+  tipoAtividadeId: string;
+  titulo: string;
+  descricao?: string;
+  links?: string[];
+}
 export interface TipoAtividade {
   id: string;
   nome: string;
