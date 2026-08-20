@@ -8,7 +8,9 @@ import { useCourses } from "@/hooks/useCourses";
 import { useCourseMentors } from "@/hooks/useCourseMentors";
 import { useActivityTypes, useCreateTask } from "@/hooks/useTasks";
 import { useProjects } from "@/hooks/useProjects";
+import { useUsers } from "@/hooks/useUsers";
 import type { CriarTarefaResponse, EscopoTarefa } from "@/types/tasks.types";
+import type { UsuarioListado } from "@/types/users.types";
 import { getErrorMessage } from "@/utils/api-error";
 
 interface Props {
@@ -32,6 +34,7 @@ export function CreateTaskDialog({
   const [links, setLinks] = useState("");
   const [tipo, setTipo] = useState("");
   const [responsavel, setResponsavel] = useState("");
+  const [responsavelIds, setResponsavelIds] = useState<string[]>([]);
   const [escopo, setEscopo] = useState<EscopoTarefa>("curso");
   const [curso, setCurso] = useState("");
   const [turma, setTurma] = useState("");
@@ -53,6 +56,12 @@ export function CreateTaskDialog({
     ativo: true,
   });
   const mentors = useCourseMentors(escopo === "evento_macro" ? "" : curso);
+  const macroMentors = useUsers({
+    pagina: 1,
+    limite: 100,
+    papel: "MENTOR",
+    ativo: true,
+  });
   useEffect(() => {
     if (open) {
       setTitulo("");
@@ -61,6 +70,7 @@ export function CreateTaskDialog({
       setLinks("");
       setTipo("");
       setResponsavel(user?.papel === "MENTOR" ? user.id : "");
+      setResponsavelIds([]);
       setEscopo("curso");
       setCurso("");
       setTurma("");
@@ -93,6 +103,10 @@ export function CreateTaskDialog({
       setValidation("Selecione o responsável pela tarefa.");
       return;
     }
+    if (escopo === "evento_macro" && responsavelIds.length === 0) {
+      setValidation("Selecione pelo menos um mentor responsável.");
+      return;
+    }
     if (inicio && prazo < inicio) {
       setValidation("O prazo final não pode ser anterior ao inicial.");
       return;
@@ -104,6 +118,7 @@ export function CreateTaskDialog({
         descricao: descricao.trim() || undefined,
         tipoAtividadeId: tipo,
         responsavelId: escopo === "evento_macro" ? undefined : responsavel,
+        responsavelIds: escopo === "evento_macro" ? responsavelIds : undefined,
         escopo,
         cursoId: escopo === "evento_macro" ? undefined : curso,
         turmaId: escopo === "turma" ? turma : undefined,
@@ -208,6 +223,7 @@ export function CreateTaskDialog({
                   setCurso("");
                   setTurma("");
                   setResponsavel("");
+                  setResponsavelIds([]);
                 }}
               >
                 <option value="curso">Curso</option>
@@ -304,11 +320,16 @@ export function CreateTaskDialog({
                   Este curso não possui mentores ativos vinculados.
                 </span>
               ) : null}
-            </label> : (
-              <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                Esta tarefa será criada para todos os mentores ativos.
-              </div>
-            )}
+            </label> : null}
+            {escopo === "evento_macro" ? (
+              <MacroMentorSelector
+                mentors={macroMentors.data?.data ?? []}
+                selectedIds={responsavelIds}
+                isLoading={macroMentors.isLoading}
+                isError={macroMentors.isError}
+                onChange={setResponsavelIds}
+              />
+            ) : null}
             <label>
               <span className="mb-2 block text-sm font-semibold">Início</span>
               <input
@@ -365,11 +386,91 @@ export function CreateTaskDialog({
               Cancelar
             </Button>
             <Button type="submit" isLoading={mutation.isPending}>
-              Criar tarefa
+              {escopo === "evento_macro" && responsavelIds.length > 0
+                ? `Criar ${responsavelIds.length} ${responsavelIds.length === 1 ? "tarefa" : "tarefas"}`
+                : "Criar tarefa"}
             </Button>
           </div>
         </form>
       </div>
     </div>
+  );
+}
+
+function MacroMentorSelector({
+  mentors,
+  selectedIds,
+  isLoading,
+  isError,
+  onChange,
+}: {
+  mentors: UsuarioListado[];
+  selectedIds: string[];
+  isLoading: boolean;
+  isError: boolean;
+  onChange: (ids: string[]) => void;
+}): JSX.Element {
+  const allSelected = mentors.length > 0 && selectedIds.length === mentors.length;
+
+  return (
+    <fieldset className="sm:col-span-2">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <legend className="text-sm font-semibold">Mentores responsáveis *</legend>
+        {mentors.length > 0 ? (
+          <button
+            type="button"
+            className="text-xs font-semibold gm-text-primary hover:underline"
+            onClick={() => onChange(allSelected ? [] : mentors.map((mentor) => mentor.id))}
+          >
+            {allSelected ? "Desmarcar todos" : "Selecionar todos"}
+          </button>
+        ) : null}
+      </div>
+      <div className="max-h-52 overflow-y-auto rounded-xl border gm-border bg-white p-2">
+        {isLoading ? (
+          <p className="p-3 text-sm text-slate-500">Carregando mentores...</p>
+        ) : null}
+        {isError ? (
+          <p className="p-3 text-sm text-red-700">
+            Não foi possível carregar os mentores.
+          </p>
+        ) : null}
+        {mentors.map((mentor) => (
+          <label
+            key={mentor.id}
+            className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-50"
+          >
+            <input
+              type="checkbox"
+              className="h-4 w-4"
+              checked={selectedIds.includes(mentor.id)}
+              onChange={(event) =>
+                onChange(
+                  event.target.checked
+                    ? [...selectedIds, mentor.id]
+                    : selectedIds.filter((id) => id !== mentor.id),
+                )
+              }
+            />
+            <span className="min-w-0">
+              <span className="block text-sm font-medium text-slate-900">
+                {mentor.nome}
+              </span>
+              <span className="block truncate text-xs text-slate-500">
+                {mentor.email}
+              </span>
+            </span>
+          </label>
+        ))}
+        {!isLoading && !isError && mentors.length === 0 ? (
+          <p className="p-3 text-sm text-slate-500">
+            Nenhum mentor ativo encontrado.
+          </p>
+        ) : null}
+      </div>
+      <span className="mt-1 block text-xs text-slate-500">
+        Será criada uma tarefa individual para cada mentor selecionado.
+      </span>
+    </fieldset>
   );
 }

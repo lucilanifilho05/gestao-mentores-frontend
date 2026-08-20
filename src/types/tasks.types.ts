@@ -68,6 +68,7 @@ export interface CriarTarefaDto {
   titulo: string;
   descricao?: string;
   responsavelId?: string;
+  responsavelIds?: string[];
   escopo: EscopoTarefa;
   cursoId?: string;
   turmaId?: string;
