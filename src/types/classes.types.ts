@@ -8,6 +8,7 @@ export interface TurmaListada {
   ativo: boolean;
   curso: TurmaCurso;
   quantidadeModulos: number;
+  quantidadeTarefas: number;
   criadoEm: string;
   atualizadoEm: string;
 }
@@ -31,6 +32,7 @@ export interface SalvarTurmaDto {
 }
 
 export interface CriarTurmaDto extends SalvarTurmaDto { cursoId: string }
+export interface AtualizarTurmaDto extends SalvarTurmaDto { cursoId: string }
 export interface AlterarStatusTurmaDto { ativo: boolean }
-export type TurmaSalva = Omit<TurmaListada, 'quantidadeModulos'>;
+export type TurmaSalva = Omit<TurmaListada, 'quantidadeModulos' | 'quantidadeTarefas'>;
 export type TurmaStatusFiltro = '' | 'ATIVAS' | 'INATIVAS';

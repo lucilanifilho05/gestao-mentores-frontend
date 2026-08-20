@@ -1,5 +1,5 @@
 import { apiRequest } from '@/api/client';
-import type { AlterarStatusTurmaDto, CriarTurmaDto, ListarTurmasParams, ListarTurmasResponse, SalvarTurmaDto, TurmaSalva } from '@/types/classes.types';
+import type { AlterarStatusTurmaDto, AtualizarTurmaDto, CriarTurmaDto, ListarTurmasParams, ListarTurmasResponse, SalvarTurmaDto, TurmaSalva } from '@/types/classes.types';
 
 function queryString(params: ListarTurmasParams): string {
   const query = new URLSearchParams();
@@ -14,7 +14,7 @@ function queryString(params: ListarTurmasParams): string {
 export const classesApi = {
   listar: (params: ListarTurmasParams) => apiRequest<ListarTurmasResponse>(`/turmas${queryString(params)}`),
   criar: (payload: CriarTurmaDto) => apiRequest<TurmaSalva>('/turmas', { method: 'POST', body: payload }),
-  atualizar: (id: string, payload: SalvarTurmaDto) => apiRequest<TurmaSalva>(`/turmas/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload }),
+  atualizar: (id: string, payload: AtualizarTurmaDto) => apiRequest<TurmaSalva>(`/turmas/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload }),
   alterarStatus: (id: string, payload: AlterarStatusTurmaDto) => apiRequest<TurmaSalva>(`/turmas/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: payload }),
   clonar: (id: string, payload: SalvarTurmaDto) => apiRequest<TurmaSalva>(`/turmas/${encodeURIComponent(id)}/clonar`, { method: 'POST', body: payload }),
 };

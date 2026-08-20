@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { classesApi } from '@/api/classes.api';
-import type { CriarTurmaDto, ListarTurmasParams, SalvarTurmaDto } from '@/types/classes.types';
+import type { AtualizarTurmaDto, CriarTurmaDto, ListarTurmasParams, SalvarTurmaDto } from '@/types/classes.types';
 
 export const classesQueryKeys = { all: ['turmas'] as const, list: (params: ListarTurmasParams) => ['turmas', 'lista', params] as const };
 
@@ -20,7 +20,7 @@ export function useCreateClass() {
 
 export function useUpdateClass() {
   const invalidate = useInvalidateClasses();
-  return useMutation({ mutationFn: ({ id, payload }: { id: string; payload: SalvarTurmaDto }) => classesApi.atualizar(id, payload), onSuccess: invalidate });
+  return useMutation({ mutationFn: ({ id, payload }: { id: string; payload: AtualizarTurmaDto }) => classesApi.atualizar(id, payload), onSuccess: invalidate });
 }
 
 export function useCloneClass() {
