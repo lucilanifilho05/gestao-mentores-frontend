@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -12,6 +12,8 @@ import { useUsers } from "@/hooks/useUsers";
 import type { CriarTarefaResponse, EscopoTarefa } from "@/types/tasks.types";
 import type { UsuarioListado } from "@/types/users.types";
 import { getErrorMessage } from "@/utils/api-error";
+
+const RichTextEditor = lazy(() => import("@/components/ui/RichTextEditor"));
 
 interface Props {
   open: boolean;
@@ -36,6 +38,7 @@ export function CreateTaskDialog({
   initialProjectId,
 }: Props): JSX.Element | null {
   const { user } = useAuth();
+  const isMentor = user?.papel === "MENTOR";
   const mutation = useCreateTask();
   const formBodyRef = useRef<HTMLDivElement>(null);
   const [titulo, setTitulo] = useState("");
@@ -75,6 +78,7 @@ export function CreateTaskDialog({
     papel: "MENTOR",
     ativo: true,
   });
+  const responsavelEfetivo = isMentor ? (user?.id ?? "") : responsavel;
   useEffect(() => {
     if (open) {
       setTitulo("");
@@ -115,7 +119,7 @@ export function CreateTaskDialog({
     if (escopo === "turma" && !turma) {
       errors.turma = "Selecione a turma da tarefa.";
     }
-    if (escopo !== "evento_macro" && !responsavel) {
+    if (escopo !== "evento_macro" && !responsavelEfetivo) {
       errors.responsavel = "Selecione o responsável pela tarefa.";
     }
     if (escopo === "evento_macro" && responsavelIds.length === 0) {
@@ -140,7 +144,7 @@ export function CreateTaskDialog({
         titulo: titulo.trim(),
         descricao: descricao.trim() || undefined,
         tipoAtividadeId: tipo,
-        responsavelId: escopo === "evento_macro" ? undefined : responsavel,
+        responsavelId: escopo === "evento_macro" ? undefined : responsavelEfetivo,
         responsavelIds: escopo === "evento_macro" ? responsavelIds : undefined,
         escopo,
         cursoId: escopo === "evento_macro" ? undefined : curso,
@@ -249,7 +253,7 @@ export function CreateTaskDialog({
                   setEscopo(e.target.value as EscopoTarefa);
                   setCurso("");
                   setTurma("");
-                  setResponsavel("");
+                  setResponsavel(isMentor ? (user?.id ?? "") : "");
                   setResponsavelIds([]);
                   setFieldErrors({});
                   setValidation(null);
@@ -274,7 +278,7 @@ export function CreateTaskDialog({
                   onChange={(e) => {
                     setCurso(e.target.value);
                     setTurma("");
-                    setResponsavel("");
+                    setResponsavel(isMentor ? (user?.id ?? "") : "");
                     clearFieldError("curso");
                   }}
                 >
@@ -334,26 +338,31 @@ export function CreateTaskDialog({
               <span className="mb-2 block text-sm font-semibold">
                 Responsável *
               </span>
-              <select
-                className={`${inputClass} ${fieldErrors.responsavel ? "gm-input-error" : ""}`}
-                aria-invalid={Boolean(fieldErrors.responsavel)}
-                disabled={user?.papel === "MENTOR" || !curso || mentors.isLoading}
-                value={responsavel}
-                onChange={(e) => { setResponsavel(e.target.value); clearFieldError("responsavel"); }}
-              >
-                <option value="">Selecione</option>
-                {user?.papel === "MENTOR" ? (
-                  <option value={user.id}>{user.nome}</option>
-                ) : (
-                  mentors.data?.map((x) => (
-                    <option key={x.id} value={x.id}>
-                      {x.nome}
-                    </option>
-                  ))
-                )}
-              </select>
-              <FieldError message={fieldErrors.responsavel} />
-              {curso && !mentors.isLoading && mentors.data?.length === 0 ? (
+              {isMentor ? (
+                <div className="rounded-xl border gm-border bg-slate-50 px-4 py-3">
+                  <p className="text-sm font-semibold text-slate-900">{user?.nome}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    A tarefa será atribuída automaticamente a você.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <select
+                    className={`${inputClass} ${fieldErrors.responsavel ? "gm-input-error" : ""}`}
+                    aria-invalid={Boolean(fieldErrors.responsavel)}
+                    disabled={!curso || mentors.isLoading}
+                    value={responsavel}
+                    onChange={(e) => { setResponsavel(e.target.value); clearFieldError("responsavel"); }}
+                  >
+                    <option value="">Selecione</option>
+                    {mentors.data?.map((x) => (
+                      <option key={x.id} value={x.id}>{x.nome}</option>
+                    ))}
+                  </select>
+                  <FieldError message={fieldErrors.responsavel} />
+                </>
+              )}
+              {!isMentor && curso && !mentors.isLoading && mentors.data?.length === 0 ? (
                 <span className="mt-1 block text-xs text-amber-700">
                   Este curso não possui mentores ativos vinculados.
                 </span>
@@ -391,17 +400,14 @@ export function CreateTaskDialog({
               />
               <FieldError message={fieldErrors.prazo} />
             </label>
-            <label className="sm:col-span-2">
+            <div className="sm:col-span-2">
               <span className="mb-2 block text-sm font-semibold">
-                Descrição
+                Observações
               </span>
-              <textarea
-                className="gm-input h-28 py-3"
-                maxLength={5000}
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-              />
-            </label>
+              <Suspense fallback={<div className="h-40 animate-pulse rounded-xl border gm-border bg-slate-50" />}>
+                <RichTextEditor value={descricao} onChange={setDescricao} />
+              </Suspense>
+            </div>
             <label className="sm:col-span-2">
               <span className="mb-2 block text-sm font-semibold">
                 Links para arquivos

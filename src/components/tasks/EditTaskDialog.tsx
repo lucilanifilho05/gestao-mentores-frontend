@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { useActivityTypes, useTask, useUpdateTask } from "@/hooks/useTasks";
 import { getErrorMessage } from "@/utils/api-error";
+
+const RichTextEditor = lazy(() => import("@/components/ui/RichTextEditor"));
 
 export function EditTaskDialog({
   taskId,
@@ -85,7 +87,7 @@ export function EditTaskDialog({
               {mutation.isError ? <Alert variant="error" title="Não foi possível atualizar a tarefa">{getErrorMessage(mutation.error)}</Alert> : null}
               <label className="block"><span className="mb-2 block text-sm font-semibold">Título *</span><input className="gm-input" maxLength={200} value={titulo} onChange={(event) => setTitulo(event.target.value)} /></label>
               <label className="block"><span className="mb-2 block text-sm font-semibold">Tipo de atividade *</span><select className="gm-input" value={tipo} onChange={(event) => setTipo(event.target.value)}>{availableTypes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
-              <label className="block"><span className="mb-2 block text-sm font-semibold">Descrição</span><textarea className="gm-input h-28 py-3" maxLength={5000} value={descricao} onChange={(event) => setDescricao(event.target.value)} /></label>
+              <div className="block"><span className="mb-2 block text-sm font-semibold">Observações</span><Suspense fallback={<div className="h-40 animate-pulse rounded-xl border gm-border bg-slate-50" />}><RichTextEditor value={descricao} onChange={setDescricao} /></Suspense></div>
               <label className="block"><span className="mb-2 block text-sm font-semibold">Links para arquivos</span><textarea className="gm-input h-28 py-3" placeholder="Adicione um link HTTP ou HTTPS por linha" value={links} onChange={(event) => setLinks(event.target.value)} /><span className="mt-1 block text-xs text-slate-500">Máximo de 20 links. Os links existentes podem ser removidos ou substituídos.</span></label>
             </div>
             <div className="flex shrink-0 justify-end gap-3 border-t gm-border bg-slate-50/70 px-6 py-4"><Button variant="secondary" disabled={mutation.isPending} onClick={close}>Cancelar</Button><Button type="submit" isLoading={mutation.isPending}>Salvar alterações</Button></div>

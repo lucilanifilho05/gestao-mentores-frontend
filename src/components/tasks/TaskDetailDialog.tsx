@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CalendarClock, CheckCircle2, ExternalLink, Link, X } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
+import { RichTextContent } from "@/components/ui/RichTextContent";
 import { useCompleteTask, useRescheduleTask, useTask } from "@/hooks/useTasks";
 import { getErrorMessage } from "@/utils/api-error";
 
@@ -22,7 +23,7 @@ export function TaskDetailDialog({ taskId, onClose, onChanged }: { taskId: strin
       {task.isError ? <div className="p-6"><Alert variant="error" title="Não foi possível carregar a tarefa">{getErrorMessage(task.error)}</Alert></div> : null}
       {data ? <div className="max-h-[75vh] overflow-y-auto"><div className="space-y-6 p-6">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Info label="Projeto" value={data.projetoNome} /><Info label="Responsável" value={data.responsavel.nome} /><Info label="Contexto" value={data.turmaCodigo ?? data.cursoNome ?? "Evento macro"} /><Info label="Prazo" value={format(data.prazoAtual)} /></div>
-        {data.descricao ? <div><h3 className="text-sm font-bold">Descrição</h3><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">{data.descricao}</p></div> : null}
+        {data.descricao ? <div><h3 className="text-sm font-bold">Observações</h3><RichTextContent html={data.descricao} /></div> : null}
         {complete.isError || reschedule.isError ? <Alert variant="error" title="Não foi possível executar a operação">{getErrorMessage(complete.error ?? reschedule.error)}</Alert> : null}
         {data.status === "pendente" ? <div className="rounded-xl border gm-border p-4"><h3 className="font-bold">Reagendar</h3><div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]"><input className="gm-input" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} /><input className="gm-input" placeholder="Justificativa (opcional)" maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} /><Button variant="secondary" disabled={!date} isLoading={reschedule.isPending} onClick={async () => { await reschedule.mutateAsync({ id: data.id, prazoNovo: new Date(date).toISOString(), justificativa: reason }); await task.refetch(); setDate(""); setReason(""); onChanged("Tarefa reagendada com sucesso."); }}><CalendarClock className="h-4 w-4" />Reagendar</Button></div></div> : null}
         <div><h3 className="font-bold">Links para arquivos</h3><div className="mt-3 space-y-2">{data.links.map((url, index) => <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm hover:bg-slate-100"><span className="inline-flex items-center gap-2"><Link className="h-4 w-4" />Link {index + 1}</span><ExternalLink className="h-4 w-4" /></a>)}{data.links.length === 0 ? <p className="text-sm text-slate-500">Nenhum link informado.</p> : null}</div></div>
