@@ -7,6 +7,7 @@ export interface PessoaTarefa {
 }
 export interface TarefaResumo {
   id: string;
+  numero: number;
   projetoId: string;
   projetoNome: string;
   tipoAtividadeId: string;
