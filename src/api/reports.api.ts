@@ -30,6 +30,7 @@ export interface DashboardFilters {
   mentorId?: string;
   cursoId?: string;
   turmaId?: string;
+  tipoAtividadeId?: string;
 }
 
 function queryString(filters: DashboardFilters): string {
@@ -43,4 +44,12 @@ function queryString(filters: DashboardFilters): string {
 export const reportsApi = {
   tasks: (filters: DashboardFilters) =>
     apiRequest<DashboardTask[]>(`/relatorios/tarefas${queryString(filters)}`),
+  excel: (filters: DashboardFilters) =>
+    apiRequest<Blob>(`/relatorios/tarefas/excel${queryString(filters)}`, {
+      responseType: "blob",
+    }),
+  pdf: (filters: DashboardFilters) =>
+    apiRequest<Blob>(`/relatorios/tarefas/pdf${queryString(filters)}`, {
+      responseType: "blob",
+    }),
 };

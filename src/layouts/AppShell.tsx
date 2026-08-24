@@ -7,6 +7,7 @@ import {
   Layers3,
   ListTodo,
   Tags,
+  FileBarChart,
   Menu,
   X,
 } from "lucide-react";
@@ -28,6 +29,10 @@ function getPageTitle(pathname: string): string {
 
   if (pathname.startsWith("/tarefas")) {
     return "Backlog de tarefas";
+  }
+
+  if (pathname.startsWith("/relatorios")) {
+    return "Relatórios";
   }
 
   if (pathname.startsWith("/turmas")) {
@@ -74,6 +79,7 @@ export function AppShell(): JSX.Element {
               <NavLink to="/turmas" className={navItemClass} onClick={() => setMobileOpen(false)}><Layers3 className="h-5 w-5" />Turmas</NavLink>
               <NavLink to="/tarefas" className={navItemClass} onClick={() => setMobileOpen(false)}><ListTodo className="h-5 w-5" />Tarefas</NavLink>
               <NavLink to="/projetos" className={navItemClass} onClick={() => setMobileOpen(false)}><FolderKanban className="h-5 w-5" />Projetos</NavLink>
+              <NavLink to="/relatorios" className={navItemClass} onClick={() => setMobileOpen(false)}><FileBarChart className="h-5 w-5" />Relatórios</NavLink>
               {user.papel === "COORDENADORA" ? <><NavLink to="/tipos-atividade" className={navItemClass} onClick={() => setMobileOpen(false)}><Tags className="h-5 w-5" />Tipos de atividade</NavLink><NavLink to="/usuarios" className={navItemClass} onClick={() => setMobileOpen(false)}><UsersRound className="h-5 w-5" />Usuários</NavLink></> : null}
             </nav>
             <div className="border-t border-white/10 p-4"><p className="truncate text-sm font-semibold text-white">{user.nome}</p><p className="mt-1 truncate text-xs text-blue-100/70">{user.email}</p></div>
@@ -116,6 +122,11 @@ export function AppShell(): JSX.Element {
           <NavLink to="/projetos" className={navItemClass}>
             <FolderKanban aria-hidden="true" className="h-5 w-5" />
             Projetos
+          </NavLink>
+
+          <NavLink to="/relatorios" className={navItemClass}>
+            <FileBarChart aria-hidden="true" className="h-5 w-5" />
+            Relatórios
           </NavLink>
 
           {user.papel === "COORDENADORA" ? (
