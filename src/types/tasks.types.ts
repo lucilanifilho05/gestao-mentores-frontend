@@ -50,11 +50,14 @@ export interface TarefaDetalhe extends TarefaResumo {
 }
 export interface ListarTarefasParams {
   projetoId?: string;
+  inicio?: string;
+  fim?: string;
   pagina?: number;
   limite?: number;
   responsavelId?: string;
   cursoId?: string;
   turmaId?: string;
+  tipoAtividadeId?: string;
   status?: StatusTarefa;
   escopo?: EscopoTarefa;
 }
