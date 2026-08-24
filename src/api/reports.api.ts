@@ -7,6 +7,7 @@ import type {
 
 export interface DashboardTask {
   id: string;
+  numero: number;
   titulo: string;
   projeto: { id: string; nome: string };
   descricao: string | null;

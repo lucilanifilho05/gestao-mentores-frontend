@@ -50,6 +50,7 @@ export interface TarefaDetalhe extends TarefaResumo {
   reagendamentos: ReagendamentoTarefa[];
 }
 export interface ListarTarefasParams {
+  numero?: number;
   projetoId?: string;
   inicio?: string;
   fim?: string;
