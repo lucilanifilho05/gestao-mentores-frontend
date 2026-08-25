@@ -8,6 +8,7 @@ import {
   ListTodo,
   Tags,
   FileBarChart,
+  CircleUserRound,
   Menu,
   X,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
+import { useUnreadTaskComments } from "@/hooks/useTasks";
 
 function roleLabel(role: "COORDENADORA" | "MENTOR"): string {
   return role === "COORDENADORA" ? "Coordenadora" : "Mentor";
@@ -35,6 +37,8 @@ function getPageTitle(pathname: string): string {
     return "Relatórios";
   }
 
+  if (pathname.startsWith("/minha-conta")) return "Minha conta";
+
   if (pathname.startsWith("/turmas")) {
     return "Turmas";
   }
@@ -53,6 +57,8 @@ function getPageTitle(pathname: string): string {
 export function AppShell(): JSX.Element {
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const unreadComments = useUnreadTaskComments(user?.papel === "MENTOR");
+  const unreadCount = unreadComments.data?.quantidade ?? 0;
 
   const location = useLocation();
 
@@ -77,9 +83,10 @@ export function AppShell(): JSX.Element {
               <NavLink to="/" end className={navItemClass} onClick={() => setMobileOpen(false)}><Home className="h-5 w-5" />Início</NavLink>
               <NavLink to="/cursos" className={navItemClass} onClick={() => setMobileOpen(false)}><GraduationCap className="h-5 w-5" />Cursos</NavLink>
               <NavLink to="/turmas" className={navItemClass} onClick={() => setMobileOpen(false)}><Layers3 className="h-5 w-5" />Turmas</NavLink>
-              <NavLink to="/tarefas" className={navItemClass} onClick={() => setMobileOpen(false)}><ListTodo className="h-5 w-5" />Tarefas</NavLink>
+              <NavLink to="/tarefas" className={navItemClass} onClick={() => setMobileOpen(false)}><ListTodo className="h-5 w-5" />Tarefas<NotificationBadge count={unreadCount} /></NavLink>
               <NavLink to="/projetos" className={navItemClass} onClick={() => setMobileOpen(false)}><FolderKanban className="h-5 w-5" />Projetos</NavLink>
               <NavLink to="/relatorios" className={navItemClass} onClick={() => setMobileOpen(false)}><FileBarChart className="h-5 w-5" />Relatórios</NavLink>
+              <NavLink to="/minha-conta" className={navItemClass} onClick={() => setMobileOpen(false)}><CircleUserRound className="h-5 w-5" />Minha conta</NavLink>
               {user.papel === "COORDENADORA" ? <><NavLink to="/tipos-atividade" className={navItemClass} onClick={() => setMobileOpen(false)}><Tags className="h-5 w-5" />Tipos de atividade</NavLink><NavLink to="/usuarios" className={navItemClass} onClick={() => setMobileOpen(false)}><UsersRound className="h-5 w-5" />Usuários</NavLink></> : null}
             </nav>
             <div className="border-t border-white/10 p-4"><p className="truncate text-sm font-semibold text-white">{user.nome}</p><p className="mt-1 truncate text-xs text-blue-100/70">{user.email}</p></div>
@@ -118,6 +125,7 @@ export function AppShell(): JSX.Element {
           <NavLink to="/tarefas" className={navItemClass}>
             <ListTodo aria-hidden="true" className="h-5 w-5" />
             Tarefas
+            <NotificationBadge count={unreadCount} />
           </NavLink>
           <NavLink to="/projetos" className={navItemClass}>
             <FolderKanban aria-hidden="true" className="h-5 w-5" />
@@ -127,6 +135,11 @@ export function AppShell(): JSX.Element {
           <NavLink to="/relatorios" className={navItemClass}>
             <FileBarChart aria-hidden="true" className="h-5 w-5" />
             Relatórios
+          </NavLink>
+
+          <NavLink to="/minha-conta" className={navItemClass}>
+            <CircleUserRound aria-hidden="true" className="h-5 w-5" />
+            Minha conta
           </NavLink>
 
           {user.papel === "COORDENADORA" ? (
@@ -197,4 +210,9 @@ export function AppShell(): JSX.Element {
       </div>
     </div>
   );
+}
+
+function NotificationBadge({ count }: { count: number }): JSX.Element | null {
+  if (count <= 0) return null;
+  return <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-orange-500 px-1.5 py-0.5 text-[10px] font-extrabold text-white" aria-label={`${count} comentário(s) não lido(s)`}>{count > 99 ? "99+" : count}</span>;
 }

@@ -6,6 +6,7 @@ import type {
   ListarTarefasParams,
   ListarTarefasResponse,
   TarefaDetalhe,
+  ComentarioTarefa,
   TipoAtividade,
 } from "@/types/tasks.types";
 
@@ -38,6 +39,17 @@ export const tasksApi = {
       method: "POST",
       body: { prazoNovo, justificativa: justificativa || undefined },
     }),
+  adicionarComentario: (id: string, conteudo: string) =>
+    apiRequest<ComentarioTarefa>(`/tarefas/${encodeURIComponent(id)}/comentarios`, {
+      method: "POST",
+      body: { conteudo },
+    }),
+  marcarComentariosComoLidos: (id: string) =>
+    apiRequest<{ quantidadeMarcada: number }>(`/tarefas/${encodeURIComponent(id)}/comentarios/marcar-lidos`, {
+      method: "POST",
+    }),
+  quantidadeComentariosNaoLidos: () =>
+    apiRequest<{ quantidade: number }>("/tarefas/comentarios/nao-lidos/quantidade"),
   listarTipos: (ativo?: boolean) =>
     apiRequest<{ data: TipoAtividade[]; meta: { total: number } }>(
       `/tipos-atividade?pagina=1&limite=100${ativo !== undefined ? `&ativo=${ativo}` : ""}`,

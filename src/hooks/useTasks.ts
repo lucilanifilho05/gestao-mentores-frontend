@@ -5,6 +5,7 @@ export const tasksKeys = {
   all: ["tarefas"] as const,
   list: (params: ListarTarefasParams) => ["tarefas", "lista", params] as const,
   detail: (id: string) => ["tarefas", "detalhe", id] as const,
+  unreadComments: ["tarefas", "comentarios-nao-lidos"] as const,
 };
 export function useTasks(params: ListarTarefasParams) {
   return useQuery({
@@ -96,5 +97,39 @@ export function useRescheduleTask() {
       justificativa?: string;
     }) => tasksApi.reagendar(id, prazoNovo, justificativa),
     onSuccess: invalidate,
+  });
+}
+export function useUnreadTaskComments(enabled = true) {
+  return useQuery({
+    queryKey: tasksKeys.unreadComments,
+    queryFn: tasksApi.quantidadeComentariosNaoLidos,
+    enabled,
+    refetchInterval: 60_000,
+  });
+}
+export function useAddTaskComment() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, conteudo }: { id: string; conteudo: string }) =>
+      tasksApi.adicionarComentario(id, conteudo),
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: tasksKeys.all }),
+        client.invalidateQueries({ queryKey: tasksKeys.detail(variables.id) }),
+      ]);
+    },
+  });
+}
+export function useMarkTaskCommentsRead() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => tasksApi.marcarComentariosComoLidos(id),
+    onSuccess: async (_data, id) => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: tasksKeys.all }),
+        client.invalidateQueries({ queryKey: tasksKeys.detail(id) }),
+        client.invalidateQueries({ queryKey: tasksKeys.unreadComments }),
+      ]);
+    },
   });
 }

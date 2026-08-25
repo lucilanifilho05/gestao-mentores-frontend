@@ -1,18 +1,28 @@
-import { useState } from "react";
-import { CalendarClock, CheckCircle2, ExternalLink, Link, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CalendarClock, CheckCircle2, ExternalLink, Link, MessageSquare, Send, X } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { RichTextContent } from "@/components/ui/RichTextContent";
-import { useCompleteTask, useRescheduleTask, useTask } from "@/hooks/useTasks";
+import { useAuth } from "@/hooks/useAuth";
+import { useAddTaskComment, useCompleteTask, useMarkTaskCommentsRead, useRescheduleTask, useTask } from "@/hooks/useTasks";
 import { getErrorMessage } from "@/utils/api-error";
 
 export function TaskDetailDialog({ taskId, onClose, onChanged }: { taskId: string | null; onClose: () => void; onChanged: (message: string) => void }): JSX.Element | null {
   const task = useTask(taskId);
+  const { user } = useAuth();
   const complete = useCompleteTask();
   const reschedule = useRescheduleTask();
+  const addComment = useAddTaskComment();
+  const markCommentsRead = useMarkTaskCommentsRead();
   const [date, setDate] = useState("");
   const [reason, setReason] = useState("");
+  const [comment, setComment] = useState("");
   const data = task.data;
+  useEffect(() => {
+    if (user?.papel === "MENTOR" && data?.possuiComentarioNaoLido && !markCommentsRead.isPending) {
+      markCommentsRead.mutate(data.id);
+    }
+  }, [data?.id, data?.possuiComentarioNaoLido, user?.papel]);
   if (!taskId) return null;
   const format = (value: string) => new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
 
@@ -24,10 +34,11 @@ export function TaskDetailDialog({ taskId, onClose, onChanged }: { taskId: strin
       {data ? <div className="max-h-[75vh] overflow-y-auto"><div className="space-y-6 p-6">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5"><Info label="ID global" value={`#${data.numero}`} /><Info label="Projeto" value={data.projetoNome} /><Info label="Responsável" value={data.responsavel.nome} /><Info label="Contexto" value={data.turmaCodigo ?? data.cursoNome ?? "Evento macro"} /><Info label="Prazo" value={format(data.prazoAtual)} /></div>
         {data.descricao ? <div><h3 className="text-sm font-bold">Observações</h3><RichTextContent html={data.descricao} /></div> : null}
-        {complete.isError || reschedule.isError ? <Alert variant="error" title="Não foi possível executar a operação">{getErrorMessage(complete.error ?? reschedule.error)}</Alert> : null}
+        {complete.isError || reschedule.isError || addComment.isError ? <Alert variant="error" title="Não foi possível executar a operação">{getErrorMessage(complete.error ?? reschedule.error ?? addComment.error)}</Alert> : null}
         {data.status === "pendente" ? <div className="rounded-xl border gm-border p-4"><h3 className="font-bold">Reagendar</h3><div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]"><input className="gm-input" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} /><input className="gm-input" placeholder="Justificativa (opcional)" maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} /><Button variant="secondary" disabled={!date} isLoading={reschedule.isPending} onClick={async () => { await reschedule.mutateAsync({ id: data.id, prazoNovo: new Date(date).toISOString(), justificativa: reason }); await task.refetch(); setDate(""); setReason(""); onChanged("Tarefa reagendada com sucesso."); }}><CalendarClock className="h-4 w-4" />Reagendar</Button></div></div> : null}
         <div><h3 className="font-bold">Links para arquivos</h3><div className="mt-3 space-y-2">{data.links.map((url, index) => <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm hover:bg-slate-100"><span className="inline-flex items-center gap-2"><Link className="h-4 w-4" />Link {index + 1}</span><ExternalLink className="h-4 w-4" /></a>)}{data.links.length === 0 ? <p className="text-sm text-slate-500">Nenhum link informado.</p> : null}</div></div>
         {data.reagendamentos.length > 0 ? <div><h3 className="font-bold">Histórico de prazos</h3><div className="mt-3 space-y-2">{data.reagendamentos.map((item) => <div key={item.id} className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900"><strong>{format(item.prazoAnterior)}</strong> → <strong>{format(item.prazoNovo)}</strong>{item.justificativa ? <p className="mt-1">{item.justificativa}</p> : null}</div>)}</div></div> : null}
+        <div className="rounded-xl border gm-border p-4"><div className="flex items-center gap-2"><MessageSquare className="h-4 w-4 gm-text-primary" /><h3 className="font-bold">Comentários da coordenação</h3></div><div className="mt-4 space-y-3">{data.comentarios.map((item) => <div key={item.id} className="rounded-lg bg-slate-50 p-3"><div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm text-slate-900">{item.autor.nome}</strong><span className="text-xs text-slate-500">{format(item.criadoEm)}</span></div><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{item.conteudo}</p></div>)}{data.comentarios.length === 0 ? <p className="text-sm text-slate-500">Nenhum comentário adicionado.</p> : null}</div>{user?.papel === "COORDENADORA" && data.status === "pendente" ? <form className="mt-4 border-t gm-border pt-4" onSubmit={(event) => { event.preventDefault(); const conteudo = comment.trim(); if (!conteudo) return; addComment.mutate({ id: data.id, conteudo }, { onSuccess: () => setComment("") }); }}><label><span className="mb-2 block text-sm font-semibold">Novo comentário</span><textarea className="gm-input h-24 py-3" maxLength={2000} placeholder="Solicite informações ou uma revisão da atividade" value={comment} onChange={(event) => setComment(event.target.value)} /></label><div className="mt-2 flex items-center justify-between gap-3"><span className="text-xs text-slate-500">{comment.length.toLocaleString("pt-BR")}/2.000</span><Button type="submit" isLoading={addComment.isPending} disabled={!comment.trim()}><Send className="h-4 w-4" />Adicionar comentário</Button></div></form> : null}</div>
       </div><div className="flex justify-end gap-3 border-t gm-border bg-slate-50/70 px-6 py-4"><Button variant="secondary" onClick={onClose}>Fechar</Button>{data.status === "pendente" ? <Button isLoading={complete.isPending} onClick={async () => { await complete.mutateAsync(data.id); onChanged("Tarefa concluída com sucesso."); onClose(); }}><CheckCircle2 className="h-4 w-4" />Concluir tarefa</Button> : null}</div></div> : null}
     </div>
   </div>;

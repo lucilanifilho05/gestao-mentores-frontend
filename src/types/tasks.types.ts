@@ -30,6 +30,8 @@ export interface TarefaResumo {
   atualizadoEm: string;
   concluidoEm: string | null;
   quantidadeReagendamentos: number;
+  quantidadeComentarios: number;
+  possuiComentarioNaoLido: boolean;
   links: string[];
 }
 export interface CriarTarefasMacroResponse {
@@ -48,6 +50,14 @@ export interface ReagendamentoTarefa {
 }
 export interface TarefaDetalhe extends TarefaResumo {
   reagendamentos: ReagendamentoTarefa[];
+  comentarios: ComentarioTarefa[];
+}
+export interface ComentarioTarefa {
+  id: string;
+  conteudo: string;
+  criadoEm: string;
+  lidoEm: string | null;
+  autor: PessoaTarefa;
 }
 export interface ListarTarefasParams {
   numero?: number;

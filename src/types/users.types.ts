@@ -82,3 +82,17 @@ export interface UsuarioStatusAtualizado {
   criadoEm: string;
   atualizadoEm: string;
 }
+
+export interface AtualizarPerfilUsuarioDto {
+  nome: string;
+  email: string;
+}
+
+export interface AlterarPropriaSenhaDto {
+  senhaAtual: string;
+  novaSenha: string;
+}
+
+export interface RedefinirSenhaUsuarioDto {
+  novaSenha: string;
+}

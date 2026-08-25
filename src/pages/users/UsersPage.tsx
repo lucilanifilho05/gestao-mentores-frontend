@@ -61,6 +61,7 @@ import type {
 import {
     getErrorMessage,
 } from '@/utils/api-error';
+import { EditMentorDialog } from '@/components/users/EditMentorDialog';
 
 const PAGE_SIZE = 20;
 
@@ -140,6 +141,7 @@ export function UsersPage(): JSX.Element {
     } = useAuth();
 
     const [logoutAllOpen, setLogoutAllOpen] = useState(false);
+    const [editMentor, setEditMentor] = useState<UsuarioListado | null>(null);
     const [isLoggingOutAll, setIsLoggingOutAll] = useState(false);
 
     async function handleLogoutAll(): Promise<void> {
@@ -444,6 +446,7 @@ export function UsersPage(): JSX.Element {
                             onRequestStatusChange={
                                 requestStatusChange
                             }
+                            onEditMentor={setEditMentor}
                         />
 
                         <Pagination
@@ -484,6 +487,7 @@ export function UsersPage(): JSX.Element {
                 }}
                 onConfirm={() => void handleLogoutAll()}
             />
+            <EditMentorDialog mentor={editMentor} onClose={() => setEditMentor(null)} />
 
             <ConfirmDialog
                 open={

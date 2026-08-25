@@ -18,6 +18,7 @@ import { ActivityTypesPage } from "@/pages/activity-types/ActivityTypesPage";
 import { ProjectsPage } from "@/pages/projects/ProjectsPage";
 import { ProjectDetailsPage } from "@/pages/projects/ProjectDetailsPage";
 import { ReportsPage } from "@/pages/reports/ReportsPage";
+import { AccountPage } from "@/pages/account/AccountPage";
 
 export const router = createBrowserRouter([
   {
@@ -42,6 +43,11 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: <HomePage />,
+          },
+
+          {
+            path: "minha-conta",
+            element: <AccountPage />,
           },
 
           {

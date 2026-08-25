@@ -7,6 +7,9 @@ import type {
   ListarUsuariosResponse,
   UsuarioCriado,
   UsuarioStatusAtualizado,
+  AtualizarPerfilUsuarioDto,
+  AlterarPropriaSenhaDto,
+  RedefinirSenhaUsuarioDto,
 } from '@/types/users.types';
 
 function criarQueryString(
@@ -89,5 +92,21 @@ export const usersApi = {
         body: payload,
       },
     );
+  },
+
+  atualizarMeuPerfil(payload: AtualizarPerfilUsuarioDto): Promise<UsuarioCriado> {
+    return apiRequest<UsuarioCriado>('/usuarios/eu', { method: 'PATCH', body: payload });
+  },
+
+  alterarMinhaSenha(payload: AlterarPropriaSenhaDto): Promise<void> {
+    return apiRequest<void>('/usuarios/eu/senha', { method: 'PATCH', body: payload, responseType: 'void' });
+  },
+
+  atualizarMentor(usuarioId: string, payload: AtualizarPerfilUsuarioDto): Promise<UsuarioCriado> {
+    return apiRequest<UsuarioCriado>(`/usuarios/${encodeURIComponent(usuarioId)}`, { method: 'PATCH', body: payload });
+  },
+
+  redefinirSenhaMentor(usuarioId: string, payload: RedefinirSenhaUsuarioDto): Promise<void> {
+    return apiRequest<void>(`/usuarios/${encodeURIComponent(usuarioId)}/senha`, { method: 'PATCH', body: payload, responseType: 'void' });
   },
 };
