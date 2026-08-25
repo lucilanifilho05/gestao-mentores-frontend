@@ -86,7 +86,7 @@ Se `git status` apresentar alterações locais, revise-as antes de executar o
 ### 2. Reconstruir e atualizar o container
 
 ```bash
-docker compose up -d --build
+  docker compose up -d --build
 ```
 
 O rebuild é obrigatório porque `VITE_API_URL` é incorporada aos arquivos do
