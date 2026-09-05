@@ -76,6 +76,13 @@ export function useCompleteTask() {
     onSuccess: invalidate,
   });
 }
+export function useStartTask() {
+  const invalidate = invalidator();
+  return useMutation({
+    mutationFn: (id: string) => tasksApi.iniciar(id),
+    onSuccess: invalidate,
+  });
+}
 export function useUpdateTask() {
   const invalidate = invalidator();
   return useMutation({

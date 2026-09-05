@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, Clock3, FilterX, ListFilter, Plus, TriangleAlert } from "lucide-react";
+import { CalendarDays, CheckCircle2, FilterX, ListFilter, PlayCircle, Plus, TriangleAlert } from "lucide-react";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { EditTaskDialog } from "@/components/tasks/EditTaskDialog";
 import { isOverdue, TaskCard } from "@/components/tasks/TaskCard";
@@ -10,18 +10,18 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useClasses } from "@/hooks/useClasses";
 import { useCourses } from "@/hooks/useCourses";
-import { useActivityTypes, useCompleteTask, useTasks } from "@/hooks/useTasks";
+import { useActivityTypes, useCompleteTask, useStartTask, useTasks } from "@/hooks/useTasks";
 import { useUsers } from "@/hooks/useUsers";
 import type { StatusTarefa, TarefaResumo } from "@/types/tasks.types";
 import { getErrorMessage } from "@/utils/api-error";
 
-function Column({ title, description, icon, tasks, empty, onOpen, onEdit, onComplete, actionsDisabled }: {
+function Column({ title, description, icon, tasks, empty, onOpen, onEdit, onComplete, onStart, actionsDisabled }: {
   title: string; description: string; icon: JSX.Element; tasks: TarefaResumo[]; empty: string;
-  onOpen: (id: string) => void; onEdit: (id: string) => void; onComplete: (task: TarefaResumo) => void; actionsDisabled: boolean;
+  onOpen: (id: string) => void; onEdit: (id: string) => void; onComplete: (task: TarefaResumo) => void; onStart: (task: TarefaResumo) => void; actionsDisabled: boolean;
 }): JSX.Element {
   return <section className="min-w-0 rounded-2xl bg-slate-100/80 p-3">
     <div className="flex items-start justify-between gap-3 px-1 py-2"><div className="flex gap-2"><span className="mt-0.5">{icon}</span><div><h3 className="font-bold text-slate-950">{title}</h3><p className="mt-0.5 text-xs text-slate-500">{description}</p></div></div><span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-700 shadow-sm">{tasks.length}</span></div>
-    <div className="mt-2 space-y-3">{tasks.map((task) => <TaskCard key={task.id} task={task} onClick={() => onOpen(task.id)} onEdit={task.status === "pendente" ? () => onEdit(task.id) : undefined} onComplete={task.status === "pendente" ? () => onComplete(task) : undefined} actionsDisabled={actionsDisabled} />)}{tasks.length === 0 ? <div className="rounded-xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500">{empty}</div> : null}</div>
+    <div className="mt-2 space-y-3">{tasks.map((task) => <TaskCard key={task.id} task={task} onClick={() => onOpen(task.id)} onEdit={task.status !== "concluida" ? () => onEdit(task.id) : undefined} onComplete={task.status !== "concluida" ? () => onComplete(task) : undefined} onStart={task.status === "planejada" ? () => onStart(task) : undefined} actionsDisabled={actionsDisabled} />)}{tasks.length === 0 ? <div className="rounded-xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500">{empty}</div> : null}</div>
   </section>;
 }
 
@@ -40,9 +40,11 @@ export function TasksPage(): JSX.Element {
   const [selected, setSelected] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [completeTarget, setCompleteTarget] = useState<TarefaResumo | null>(null);
+  const [startTarget, setStartTarget] = useState<TarefaResumo | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
   const complete = useCompleteTask();
+  const start = useStartTask();
   const parsedTaskNumber = Number(taskNumber);
   const validTaskNumber = Number.isInteger(parsedTaskNumber) && parsedTaskNumber > 0 ? parsedTaskNumber : undefined;
   const tasks = useTasks({ pagina: 1, limite: 100, numero: validTaskNumber, inicio: inicio || undefined, fim: fim || undefined, status: status || undefined, cursoId: course || undefined, turmaId: classId || undefined, tipoAtividadeId: activityTypeId || undefined, responsavelId: coordinator ? owner || undefined : undefined });
@@ -56,13 +58,15 @@ export function TasksPage(): JSX.Element {
   }
   const all = tasks.data?.data ?? [];
   const overdue = all.filter(isOverdue);
-  const pending = all.filter((item) => item.status === "pendente" && !isOverdue(item));
+  const planned = all.filter((item) => item.status === "planejada");
+  const inProgress = all.filter((item) => item.status === "em_andamento");
   const done = all.filter((item) => item.status === "concluida");
   const columnActions = {
     onOpen: setSelected,
     onEdit: setEditing,
     onComplete: setCompleteTarget,
-    actionsDisabled: complete.isPending,
+    onStart: setStartTarget,
+    actionsDisabled: complete.isPending || start.isPending,
   };
 
   async function confirmComplete(): Promise<void> {
@@ -75,6 +79,19 @@ export function TasksPage(): JSX.Element {
     } catch (error) {
       setOperationError(getErrorMessage(error));
       setCompleteTarget(null);
+    }
+  }
+
+  async function confirmStart(): Promise<void> {
+    if (!startTarget) return;
+    try {
+      await start.mutateAsync(startTarget.id);
+      setMessage(`A tarefa “${startTarget.titulo}” está em andamento.`);
+      setOperationError(null);
+      setStartTarget(null);
+    } catch (error) {
+      setOperationError(getErrorMessage(error));
+      setStartTarget(null);
     }
   }
 
@@ -91,18 +108,19 @@ export function TasksPage(): JSX.Element {
         <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Curso</span><select className="gm-input" value={course} onChange={(event) => { setCourse(event.target.value); setClassId(""); }}><option value="">Todos</option>{courses.data?.data.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
         <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Turma</span><select className="gm-input" value={classId} onChange={(event) => setClassId(event.target.value)}><option value="">Todas</option>{classes.data?.data.map((item) => <option key={item.id} value={item.id}>{item.codigo}</option>)}</select></label>
         <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Tipo de atividade</span><select className="gm-input" value={activityTypeId} onChange={(event) => setActivityTypeId(event.target.value)}><option value="">Todos</option>{activityTypes.data?.data.map((item) => <option key={item.id} value={item.id}>{item.nome}{item.ativo ? "" : " (inativo)"}</option>)}</select></label>
-        <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Status</span><select className="gm-input" value={status} onChange={(event) => setStatus(event.target.value as StatusTarefa | "")}><option value="">Todos</option><option value="pendente">Pendentes</option><option value="concluida">Concluídas</option></select></label>
+        <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Status</span><select className="gm-input" value={status} onChange={(event) => setStatus(event.target.value as StatusTarefa | "")}><option value="">Todos</option><option value="planejada">Planejadas</option><option value="em_andamento">Em andamento</option><option value="atrasada">Atrasadas</option><option value="concluida">Concluídas</option></select></label>
         <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">ID global</span><input className="gm-input" type="number" min="1" step="1" inputMode="numeric" placeholder="Ex.: 123" value={taskNumber} onChange={(event) => setTaskNumber(event.target.value)} /></label>
       </div>
       {hasFilters ? <Button className="mt-4" variant="ghost" onClick={clearFilters}><FilterX className="h-4 w-4" />Limpar filtros</Button> : null}
     </details>
     {tasks.isError ? <Alert variant="error" title="Não foi possível carregar o backlog">{getErrorMessage(tasks.error)}</Alert> : null}
     {tasks.isLoading ? <div className="grid gap-4 lg:grid-cols-3">{[1, 2, 3].map((item) => <div key={item} className="h-96 animate-pulse rounded-2xl bg-slate-100" />)}</div> : null}
-    {!tasks.isLoading && !tasks.isError ? <div className="grid items-start gap-4 lg:grid-cols-3"><Column title="Atrasadas" description="Pendências com prazo vencido" icon={<TriangleAlert className="h-5 w-5 text-red-600" />} tasks={overdue} empty="Nenhuma tarefa atrasada." {...columnActions} /><Column title="Pendentes" description="Próximas entregas" icon={<Clock3 className="h-5 w-5 text-amber-600" />} tasks={pending} empty="Nenhuma tarefa pendente." {...columnActions} /><Column title="Concluídas" description="Entregas finalizadas" icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />} tasks={done} empty="Nenhuma tarefa concluída." {...columnActions} /></div> : null}
+    {!tasks.isLoading && !tasks.isError ? <div className="grid items-start gap-4 xl:grid-cols-4"><Column title="Planejadas" description="Atividades ainda não iniciadas" icon={<CalendarDays className="h-5 w-5 text-slate-600" />} tasks={planned} empty="Nenhuma tarefa planejada." {...columnActions} /><Column title="Em andamento" description="Atividades em execução" icon={<PlayCircle className="h-5 w-5 text-blue-700" />} tasks={inProgress} empty="Nenhuma tarefa em andamento." {...columnActions} /><Column title="Atrasadas" description="Atividades com prazo vencido" icon={<TriangleAlert className="h-5 w-5 text-red-600" />} tasks={overdue} empty="Nenhuma tarefa atrasada." {...columnActions} /><Column title="Concluídas" description="Entregas finalizadas" icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />} tasks={done} empty="Nenhuma tarefa concluída." {...columnActions} /></div> : null}
     {tasks.data && tasks.data.meta.total > 100 ? <Alert variant="info" title="Backlog parcial">Exibindo as primeiras 100 tarefas. Use os filtros para refinar a visualização.</Alert> : null}
     <CreateTaskDialog open={createOpen} onClose={() => setCreateOpen(false)} onCreated={(result) => { setCreateOpen(false); setMessage(`A tarefa “${result.titulo}” foi criada.`); }} />
     <EditTaskDialog taskId={editing} onClose={() => setEditing(null)} onSaved={setMessage} />
     <TaskDetailDialog taskId={selected} onClose={() => setSelected(null)} onChanged={setMessage} />
     <ConfirmDialog open={completeTarget !== null} title="Concluir tarefa?" description={`A tarefa “${completeTarget?.titulo ?? ""}” não poderá mais ser editada ou reagendada.`} confirmLabel="Concluir tarefa" isLoading={complete.isPending} onClose={() => { if (!complete.isPending) setCompleteTarget(null); }} onConfirm={() => void confirmComplete()} />
+    <ConfirmDialog open={startTarget !== null} title="Iniciar tarefa?" description={`A tarefa “${startTarget?.titulo ?? ""}” será movida para Em andamento.`} confirmLabel="Iniciar tarefa" isLoading={start.isPending} onClose={() => { if (!start.isPending) setStartTarget(null); }} onConfirm={() => void confirmStart()} />
   </div>;
 }

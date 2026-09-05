@@ -1,5 +1,5 @@
 export type EscopoTarefa = "curso" | "turma" | "evento_macro";
-export type StatusTarefa = "pendente" | "concluida";
+export type StatusTarefa = "planejada" | "em_andamento" | "atrasada" | "concluida";
 export interface PessoaTarefa {
   id: string;
   nome: string;
@@ -29,6 +29,7 @@ export interface TarefaResumo {
   criadoEm: string;
   atualizadoEm: string;
   concluidoEm: string | null;
+  iniciadoEm: string | null;
   quantidadeReagendamentos: number;
   quantidadeComentarios: number;
   possuiComentarioNaoLido: boolean;

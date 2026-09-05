@@ -34,6 +34,10 @@ export const tasksApi = {
     apiRequest<TarefaDetalhe>(`/tarefas/${encodeURIComponent(id)}/concluir`, {
       method: "POST",
     }),
+  iniciar: (id: string) =>
+    apiRequest<TarefaDetalhe>(`/tarefas/${encodeURIComponent(id)}/iniciar`, {
+      method: "POST",
+    }),
   reagendar: (id: string, prazoNovo: string, justificativa?: string) =>
     apiRequest<TarefaDetalhe>(`/tarefas/${encodeURIComponent(id)}/reagendar`, {
       method: "POST",

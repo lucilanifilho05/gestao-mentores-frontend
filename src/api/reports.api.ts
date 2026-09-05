@@ -24,6 +24,7 @@ export interface DashboardTask {
   quantidadeLinks: number;
   criadoEm: string;
   concluidoEm: string | null;
+  iniciadoEm: string | null;
 }
 export interface DashboardFilters {
   inicio?: string;
