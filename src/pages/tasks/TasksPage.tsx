@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { CalendarDays, CheckCircle2, FilterX, ListFilter, PlayCircle, Plus, TriangleAlert } from "lucide-react";
+import { CalendarDays, CalendarRange, CheckCircle2, Columns3, FilterX, ListFilter, PlayCircle, Plus, TriangleAlert } from "lucide-react";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { EditTaskDialog } from "@/components/tasks/EditTaskDialog";
+import { TaskCalendar } from "@/components/tasks/TaskCalendar";
 import { isOverdue, TaskCard } from "@/components/tasks/TaskCard";
 import { TaskDetailDialog } from "@/components/tasks/TaskDetailDialog";
 import { Alert } from "@/components/ui/Alert";
@@ -14,6 +15,20 @@ import { useActivityTypes, useCompleteTask, useStartTask, useTasks } from "@/hoo
 import { useUsers } from "@/hooks/useUsers";
 import type { StatusTarefa, TarefaResumo } from "@/types/tasks.types";
 import { getErrorMessage } from "@/utils/api-error";
+
+function currentMonth(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthRange(month: string): { inicio: string; fim: string } {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const lastDay = new Date(year, monthNumber, 0).getDate();
+  return {
+    inicio: `${month}-01`,
+    fim: `${month}-${String(lastDay).padStart(2, "0")}`,
+  };
+}
 
 function Column({ title, description, icon, tasks, empty, onOpen, onEdit, onComplete, onStart, actionsDisabled }: {
   title: string; description: string; icon: JSX.Element; tasks: TarefaResumo[]; empty: string;
@@ -28,6 +43,8 @@ function Column({ title, description, icon, tasks, empty, onOpen, onEdit, onComp
 export function TasksPage(): JSX.Element {
   const { user } = useAuth();
   const coordinator = user?.papel === "COORDENADORA";
+  const [view, setView] = useState<"kanban" | "agenda">("kanban");
+  const [calendarMonth, setCalendarMonth] = useState(currentMonth);
   const [status, setStatus] = useState<StatusTarefa | "">("");
   const [taskNumber, setTaskNumber] = useState("");
   const [inicio, setInicio] = useState("");
@@ -47,7 +64,10 @@ export function TasksPage(): JSX.Element {
   const start = useStartTask();
   const parsedTaskNumber = Number(taskNumber);
   const validTaskNumber = Number.isInteger(parsedTaskNumber) && parsedTaskNumber > 0 ? parsedTaskNumber : undefined;
-  const tasks = useTasks({ pagina: 1, limite: 100, numero: validTaskNumber, inicio: inicio || undefined, fim: fim || undefined, status: status || undefined, cursoId: course || undefined, turmaId: classId || undefined, tipoAtividadeId: activityTypeId || undefined, responsavelId: coordinator ? owner || undefined : undefined });
+  const calendarRange = monthRange(calendarMonth);
+  const tasks = useTasks(view === "agenda"
+    ? { pagina: 1, limite: 100, inicio: calendarRange.inicio, fim: calendarRange.fim }
+    : { pagina: 1, limite: 100, numero: validTaskNumber, inicio: inicio || undefined, fim: fim || undefined, status: status || undefined, cursoId: course || undefined, turmaId: classId || undefined, tipoAtividadeId: activityTypeId || undefined, responsavelId: coordinator ? owner || undefined : undefined });
   const courses = useCourses({ pagina: 1, limite: 100, apenas_meus: user?.papel === "MENTOR" ? true : undefined });
   const classes = useClasses({ pagina: 1, limite: 100, cursoId: course || undefined });
   const mentors = useUsers({ pagina: 1, limite: 100, papel: "MENTOR", ativo: true });
@@ -96,10 +116,10 @@ export function TasksPage(): JSX.Element {
   }
 
   return <div className="mx-auto max-w-[1500px] space-y-6">
-    <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><p className="text-sm font-semibold gm-text-primary">Planejamento e execução</p><h2 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">Backlog de tarefas</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{coordinator ? "Acompanhe entregas, responsáveis e prazos de toda a operação." : "Organize e acompanhe as tarefas atribuídas a você."}</p></div><Button onClick={() => { setMessage(null); setCreateOpen(true); }}><Plus className="h-4 w-4" />Nova tarefa</Button></section>
+    <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><p className="text-sm font-semibold gm-text-primary">Planejamento e execução</p><h2 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">Tarefas</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{coordinator ? "Acompanhe entregas, responsáveis e prazos de toda a operação." : "Organize e acompanhe as tarefas atribuídas a você."}</p></div><div className="flex flex-wrap gap-2"><div className="flex rounded-xl bg-slate-100 p-1" aria-label="Visualização das tarefas"><button type="button" className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition ${view === "kanban" ? "bg-white text-blue-700 shadow-sm" : "text-slate-600 hover:text-slate-900"}`} onClick={() => setView("kanban")}><Columns3 className="h-4 w-4" />Kanban</button><button type="button" className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition ${view === "agenda" ? "bg-white text-blue-700 shadow-sm" : "text-slate-600 hover:text-slate-900"}`} onClick={() => setView("agenda")}><CalendarRange className="h-4 w-4" />Agenda</button></div><Button onClick={() => { setMessage(null); setCreateOpen(true); }}><Plus className="h-4 w-4" />Nova tarefa</Button></div></section>
     {message ? <Alert variant="success" title="Operação concluída">{message}</Alert> : null}
     {operationError ? <Alert variant="error" title="Não foi possível concluir a tarefa">{operationError}</Alert> : null}
-    <details className="gm-panel group p-5 sm:p-6" open={hasFilters}>
+    {view === "kanban" ? <details className="gm-panel group p-5 sm:p-6" open={hasFilters}>
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-slate-800"><span className="inline-flex items-center gap-2"><ListFilter className="h-5 w-5 gm-text-primary" />Filtrar tarefas</span><span className="text-xs font-medium text-slate-500">{tasks.isFetching && !tasks.isLoading ? "Atualizando…" : hasFilters ? "Filtros aplicados" : "Opcional"}</span></summary>
       <div className="mt-5 grid gap-4 border-t gm-border pt-5 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
         <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">De</span><input className="gm-input" type="date" value={inicio} max={fim || undefined} onChange={(event) => setInicio(event.target.value)} /></label>
@@ -112,11 +132,12 @@ export function TasksPage(): JSX.Element {
         <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">ID global</span><input className="gm-input" type="number" min="1" step="1" inputMode="numeric" placeholder="Ex.: 123" value={taskNumber} onChange={(event) => setTaskNumber(event.target.value)} /></label>
       </div>
       {hasFilters ? <Button className="mt-4" variant="ghost" onClick={clearFilters}><FilterX className="h-4 w-4" />Limpar filtros</Button> : null}
-    </details>
+    </details> : null}
     {tasks.isError ? <Alert variant="error" title="Não foi possível carregar o backlog">{getErrorMessage(tasks.error)}</Alert> : null}
     {tasks.isLoading ? <div className="grid gap-4 lg:grid-cols-3">{[1, 2, 3].map((item) => <div key={item} className="h-96 animate-pulse rounded-2xl bg-slate-100" />)}</div> : null}
-    {!tasks.isLoading && !tasks.isError ? <div className="grid items-start gap-4 xl:grid-cols-4"><Column title="Planejadas" description="Atividades ainda não iniciadas" icon={<CalendarDays className="h-5 w-5 text-slate-600" />} tasks={planned} empty="Nenhuma tarefa planejada." {...columnActions} /><Column title="Em andamento" description="Atividades em execução" icon={<PlayCircle className="h-5 w-5 text-blue-700" />} tasks={inProgress} empty="Nenhuma tarefa em andamento." {...columnActions} /><Column title="Atrasadas" description="Atividades com prazo vencido" icon={<TriangleAlert className="h-5 w-5 text-red-600" />} tasks={overdue} empty="Nenhuma tarefa atrasada." {...columnActions} /><Column title="Concluídas" description="Entregas finalizadas" icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />} tasks={done} empty="Nenhuma tarefa concluída." {...columnActions} /></div> : null}
-    {tasks.data && tasks.data.meta.total > 100 ? <Alert variant="info" title="Backlog parcial">Exibindo as primeiras 100 tarefas. Use os filtros para refinar a visualização.</Alert> : null}
+    {!tasks.isLoading && !tasks.isError && view === "kanban" ? <div className="grid items-start gap-4 xl:grid-cols-4"><Column title="Planejadas" description="Atividades ainda não iniciadas" icon={<CalendarDays className="h-5 w-5 text-slate-600" />} tasks={planned} empty="Nenhuma tarefa planejada." {...columnActions} /><Column title="Em andamento" description="Atividades em execução" icon={<PlayCircle className="h-5 w-5 text-blue-700" />} tasks={inProgress} empty="Nenhuma tarefa em andamento." {...columnActions} /><Column title="Atrasadas" description="Atividades com prazo vencido" icon={<TriangleAlert className="h-5 w-5 text-red-600" />} tasks={overdue} empty="Nenhuma tarefa atrasada." {...columnActions} /><Column title="Concluídas" description="Entregas finalizadas" icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />} tasks={done} empty="Nenhuma tarefa concluída." {...columnActions} /></div> : null}
+    {!tasks.isLoading && !tasks.isError && view === "agenda" ? <TaskCalendar month={calendarMonth} tasks={all} showOwner={coordinator} onMonthChange={setCalendarMonth} onOpen={setSelected} /> : null}
+    {tasks.data && tasks.data.meta.total > 100 ? <Alert variant="info" title="Visualização parcial">Exibindo as primeiras 100 tarefas do período selecionado.</Alert> : null}
     <CreateTaskDialog open={createOpen} onClose={() => setCreateOpen(false)} onCreated={(result) => { setCreateOpen(false); setMessage(`A tarefa “${result.titulo}” foi criada.`); }} />
     <EditTaskDialog taskId={editing} onClose={() => setEditing(null)} onSaved={setMessage} />
     <TaskDetailDialog taskId={selected} onClose={() => setSelected(null)} onChanged={setMessage} />
