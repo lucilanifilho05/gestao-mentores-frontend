@@ -16,7 +16,7 @@ export default function RichTextEditor({
   value,
   onChange,
   disabled = false,
-  label = "ObservaÃ§Ãµes",
+  label = "Observações",
 }: Props): JSX.Element {
   const editor = useEditor({
     extensions: [
@@ -75,11 +75,11 @@ export default function RichTextEditor({
 
   return (
     <div className={`gm-rich-text ${disabled ? "opacity-60" : ""}`}>
-      <div className="gm-rich-text-toolbar" role="toolbar" aria-label="FormataÃ§Ã£o das observaÃ§Ãµes">
+      <div className="gm-rich-text-toolbar" role="toolbar" aria-label="Formatação das observações">
         <ToolbarButton label="Negrito" active={editor?.isActive("bold")} disabled={!editor || disabled} onClick={() => editor?.chain().focus().toggleBold().run()}>
           <Bold className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton label="ItÃ¡lico" active={editor?.isActive("italic")} disabled={!editor || disabled} onClick={() => editor?.chain().focus().toggleItalic().run()}>
+        <ToolbarButton label="Itálico" active={editor?.isActive("italic")} disabled={!editor || disabled} onClick={() => editor?.chain().focus().toggleItalic().run()}>
           <Italic className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton label="Lista com marcadores" active={editor?.isActive("bulletList")} disabled={!editor || disabled} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
@@ -89,7 +89,7 @@ export default function RichTextEditor({
           <ListOrdered className="h-4 w-4" />
         </ToolbarButton>
         <span className="mx-1 h-5 w-px bg-slate-200" aria-hidden="true" />
-        <ToolbarButton label="Remover formataÃ§Ã£o" disabled={!editor || disabled} onClick={() => editor?.chain().focus().unsetAllMarks().clearNodes().run()}>
+        <ToolbarButton label="Remover formatação" disabled={!editor || disabled} onClick={() => editor?.chain().focus().unsetAllMarks().clearNodes().run()}>
           <Eraser className="h-4 w-4" />
         </ToolbarButton>
       </div>
