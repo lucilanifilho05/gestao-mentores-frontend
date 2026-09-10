@@ -73,7 +73,7 @@ export function EditTaskDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-2 sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
-      <div className="gm-panel flex max-h-[calc(100vh-1rem)] w-full max-w-2xl flex-col overflow-hidden sm:max-h-[calc(100vh-2rem)]" role="dialog" aria-modal="true" aria-labelledby="edit-task-title">
+      <div className="gm-panel flex max-h-[calc(100vh-1rem)] w-full max-w-4xl flex-col overflow-hidden sm:max-h-[calc(100vh-2rem)]" role="dialog" aria-modal="true" aria-labelledby="edit-task-title">
         <div className="flex shrink-0 items-start justify-between gap-4 border-b gm-border px-6 py-5">
           <div><p className="text-sm font-semibold gm-text-primary">Backlog</p><h2 id="edit-task-title" className="mt-1 text-xl font-bold">Editar tarefa</h2><p className="mt-2 text-sm text-slate-600">Atualize o conteúdo e adicione links aos arquivos da atividade.</p></div>
           <button type="button" aria-label="Fechar" disabled={mutation.isPending} onClick={close} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button>

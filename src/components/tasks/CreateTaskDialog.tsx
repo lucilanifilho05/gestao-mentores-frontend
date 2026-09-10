@@ -170,7 +170,7 @@ export function CreateTaskDialog({
       }}
     >
       <div
-        className="gm-panel flex max-h-[calc(100vh-1rem)] w-full max-w-3xl flex-col overflow-hidden sm:max-h-[calc(100vh-2rem)]"
+        className="gm-panel flex max-h-[calc(100vh-1rem)] w-full max-w-5xl flex-col overflow-hidden sm:max-h-[calc(100vh-2rem)]"
         role="dialog"
         aria-modal="true"
       >
