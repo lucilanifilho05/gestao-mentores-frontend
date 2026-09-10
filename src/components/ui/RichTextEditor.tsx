@@ -1,13 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import TiptapImage from "@tiptap/extension-image";
-import { Bold, Eraser, ImagePlus, Italic, List, ListOrdered, X } from "lucide-react";
-
-import { Button } from "@/components/ui/Button";
+import { Bold, Eraser, Italic, List, ListOrdered } from "lucide-react";
 
 const MAX_TEXT_LENGTH = 5000;
-const MAX_IMAGES = 5;
 
 interface Props {
   value: string;
@@ -22,10 +18,6 @@ export default function RichTextEditor({
   disabled = false,
   label = "Observações",
 }: Props): JSX.Element {
-  const [imageFormOpen, setImageFormOpen] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
-  const [imageAlt, setImageAlt] = useState("");
-  const [imageError, setImageError] = useState<string | null>(null);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -40,13 +32,6 @@ export default function RichTextEditor({
         strike: false,
         trailingNode: false,
         underline: false,
-      }),
-      TiptapImage.configure({
-        allowBase64: false,
-        HTMLAttributes: {
-          loading: "lazy",
-          referrerpolicy: "no-referrer",
-        },
       }),
     ],
     content: normalizeInitialContent(value),
@@ -87,39 +72,6 @@ export default function RichTextEditor({
   }, [editor, value]);
 
   const characterCount = editor?.state.doc.textContent.length ?? 0;
-  let imageCount = 0;
-  editor?.state.doc.descendants((node) => {
-    if (node.type.name === "image") imageCount += 1;
-  });
-
-  const closeImageForm = () => {
-    setImageFormOpen(false);
-    setImageUrl("");
-    setImageAlt("");
-    setImageError(null);
-  };
-
-  const insertImage = () => {
-    const url = imageUrl.trim();
-    const alt = imageAlt.trim();
-    if (imageCount >= MAX_IMAGES) {
-      setImageError("O limite de cinco imagens foi atingido.");
-      return;
-    }
-    try {
-      const parsedUrl = new URL(url);
-      if (parsedUrl.protocol !== "https:") throw new Error();
-    } catch {
-      setImageError("Informe uma URL HTTPS válida.");
-      return;
-    }
-    if (!alt) {
-      setImageError("Informe uma descrição para a imagem.");
-      return;
-    }
-    editor?.chain().focus().setImage({ src: url, alt }).run();
-    closeImageForm();
-  };
 
   return (
     <div className={`gm-rich-text ${disabled ? "opacity-60" : ""}`}>
@@ -136,18 +88,14 @@ export default function RichTextEditor({
         <ToolbarButton label="Lista numerada" active={editor?.isActive("orderedList")} disabled={!editor || disabled} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
           <ListOrdered className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton label="Inserir imagem por URL" disabled={!editor || disabled || imageCount >= MAX_IMAGES} onClick={() => { setImageFormOpen((open) => !open); setImageError(null); }}>
-          <ImagePlus className="h-4 w-4" />
-        </ToolbarButton>
         <span className="mx-1 h-5 w-px bg-slate-200" aria-hidden="true" />
         <ToolbarButton label="Remover formatação" disabled={!editor || disabled} onClick={() => editor?.chain().focus().unsetAllMarks().clearNodes().run()}>
           <Eraser className="h-4 w-4" />
         </ToolbarButton>
       </div>
-      {imageFormOpen ? <div className="border-b gm-border bg-slate-50 p-3"><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-bold text-slate-800">Inserir imagem</p><p className="mt-0.5 text-xs text-slate-500">Use uma imagem pública com endereço HTTPS.</p></div><button type="button" className="rounded-md p-1 text-slate-500 hover:bg-slate-200" aria-label="Fechar inserção de imagem" onClick={closeImageForm}><X className="h-4 w-4" /></button></div><div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]"><label><span className="mb-1 block text-xs font-bold text-slate-600">URL da imagem</span><input className="gm-input" type="url" inputMode="url" placeholder="https://exemplo.com/imagem.jpg" value={imageUrl} onChange={(event) => { setImageUrl(event.target.value); setImageError(null); }} /></label><label><span className="mb-1 block text-xs font-bold text-slate-600">Descrição da imagem</span><input className="gm-input" maxLength={200} placeholder="Ex.: Gráfico de acompanhamento" value={imageAlt} onChange={(event) => { setImageAlt(event.target.value); setImageError(null); }} /></label><Button className="self-end" type="button" onClick={insertImage}>Inserir</Button></div>{imageError ? <p className="mt-2 text-sm font-semibold text-red-700" role="alert">{imageError}</p> : null}</div> : null}
       <EditorContent editor={editor} />
       <div className="flex justify-end border-t gm-border px-3 py-1.5 text-xs text-slate-500">
-        <span>{imageCount}/{MAX_IMAGES} imagens · {characterCount.toLocaleString("pt-BR")}/{MAX_TEXT_LENGTH.toLocaleString("pt-BR")} caracteres</span>
+        {characterCount.toLocaleString("pt-BR")}/{MAX_TEXT_LENGTH.toLocaleString("pt-BR")}
       </div>
     </div>
   );

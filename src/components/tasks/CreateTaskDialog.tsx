@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
+import { TaskLinksField } from "@/components/tasks/TaskLinksField";
 import { useAuth } from "@/hooks/useAuth";
 import { useClasses } from "@/hooks/useClasses";
 import { useCourses } from "@/hooks/useCourses";
@@ -44,7 +45,7 @@ export function CreateTaskDialog({
   const [titulo, setTitulo] = useState("");
   const [projeto, setProjeto] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [links, setLinks] = useState("");
+  const [links, setLinks] = useState<string[]>([]);
   const [tipo, setTipo] = useState("");
   const [responsavel, setResponsavel] = useState("");
   const [responsavelIds, setResponsavelIds] = useState<string[]>([]);
@@ -84,7 +85,7 @@ export function CreateTaskDialog({
       setTitulo("");
       setProjeto(initialProjectId ?? "");
       setDescricao("");
-      setLinks("");
+      setLinks([]);
       setTipo("");
       setResponsavel(user?.papel === "MENTOR" ? user.id : "");
       setResponsavelIds([]);
@@ -151,10 +152,7 @@ export function CreateTaskDialog({
         turmaId: escopo === "turma" ? turma : undefined,
         prazoInicio: inicio ? new Date(inicio).toISOString() : undefined,
         prazoAtual: new Date(prazo).toISOString(),
-        links: links
-          .split(/\r?\n/)
-          .map((link) => link.trim())
-          .filter(Boolean),
+        links,
       });
       onCreated(task);
     } catch {
@@ -170,7 +168,7 @@ export function CreateTaskDialog({
       }}
     >
       <div
-        className="gm-panel flex max-h-[calc(100vh-1rem)] w-full max-w-5xl flex-col overflow-hidden sm:max-h-[calc(100vh-2rem)]"
+        className="gm-panel flex max-h-[calc(100vh-1rem)] w-full max-w-3xl flex-col overflow-hidden sm:max-h-[calc(100vh-2rem)]"
         role="dialog"
         aria-modal="true"
       >
@@ -408,21 +406,7 @@ export function CreateTaskDialog({
                 <RichTextEditor value={descricao} onChange={setDescricao} />
               </Suspense>
             </div>
-            <label className="sm:col-span-2">
-              <span className="mb-2 block text-sm font-semibold">
-                Links para arquivos
-              </span>
-              <textarea
-                className="gm-input h-24 py-3"
-                placeholder="Adicione um link de arquivo por linha"
-                value={links}
-                onChange={(e) => setLinks(e.target.value)}
-              />
-              <span className="mt-1 block text-xs text-slate-500">
-                Os arquivos devem estar compartilhados no serviço de
-                armazenamento escolhido.
-              </span>
-            </label>
+            <div className="sm:col-span-2"><TaskLinksField value={links} onChange={setLinks} disabled={mutation.isPending} /></div>
           </div>
           <div className="flex shrink-0 justify-end gap-3 border-t gm-border bg-slate-50/70 px-6 py-4">
             <Button
