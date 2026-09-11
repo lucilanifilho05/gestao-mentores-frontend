@@ -66,7 +66,7 @@ export function TasksPage(): JSX.Element {
   const validTaskNumber = Number.isInteger(parsedTaskNumber) && parsedTaskNumber > 0 ? parsedTaskNumber : undefined;
   const calendarRange = monthRange(calendarMonth);
   const tasks = useTasks(view === "agenda"
-    ? { pagina: 1, limite: 100, inicio: calendarRange.inicio, fim: calendarRange.fim }
+    ? { pagina: 1, limite: 100, inicio: calendarRange.inicio, fim: calendarRange.fim, responsavelId: coordinator ? owner || undefined : undefined }
     : { pagina: 1, limite: 100, numero: validTaskNumber, inicio: inicio || undefined, fim: fim || undefined, status: status || undefined, cursoId: course || undefined, turmaId: classId || undefined, tipoAtividadeId: activityTypeId || undefined, responsavelId: coordinator ? owner || undefined : undefined });
   const courses = useCourses({ pagina: 1, limite: 100, apenas_meus: user?.papel === "MENTOR" ? true : undefined });
   const classes = useClasses({ pagina: 1, limite: 100, cursoId: course || undefined });
@@ -133,6 +133,12 @@ export function TasksPage(): JSX.Element {
       </div>
       {hasFilters ? <Button className="mt-4" variant="ghost" onClick={clearFilters}><FilterX className="h-4 w-4" />Limpar filtros</Button> : null}
     </details> : null}
+    {view === "agenda" && coordinator ? <section className="gm-panel p-5 sm:p-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <label className="w-full sm:max-w-sm"><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Mentor</span><select className="gm-input" value={owner} onChange={(event) => setOwner(event.target.value)}><option value="">Todos os mentores</option>{mentors.data?.data.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+        <div className="flex items-center gap-3">{tasks.isFetching && !tasks.isLoading ? <span className="text-xs font-semibold gm-text-primary">Atualizando calendário…</span> : null}{owner ? <Button variant="ghost" onClick={() => setOwner("")}><FilterX className="h-4 w-4" />Limpar filtro</Button> : null}</div>
+      </div>
+    </section> : null}
     {tasks.isError ? <Alert variant="error" title="Não foi possível carregar o backlog">{getErrorMessage(tasks.error)}</Alert> : null}
     {tasks.isLoading ? <div className="grid gap-4 lg:grid-cols-3">{[1, 2, 3].map((item) => <div key={item} className="h-96 animate-pulse rounded-2xl bg-slate-100" />)}</div> : null}
     {!tasks.isLoading && !tasks.isError && view === "kanban" ? <div className="grid items-start gap-4 xl:grid-cols-4"><Column title="Planejadas" description="Atividades ainda não iniciadas" icon={<CalendarDays className="h-5 w-5 text-slate-600" />} tasks={planned} empty="Nenhuma tarefa planejada." {...columnActions} /><Column title="Em andamento" description="Atividades em execução" icon={<PlayCircle className="h-5 w-5 text-blue-700" />} tasks={inProgress} empty="Nenhuma tarefa em andamento." {...columnActions} /><Column title="Atrasadas" description="Atividades com prazo vencido" icon={<TriangleAlert className="h-5 w-5 text-red-600" />} tasks={overdue} empty="Nenhuma tarefa atrasada." {...columnActions} /><Column title="Concluídas" description="Entregas finalizadas" icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />} tasks={done} empty="Nenhuma tarefa concluída." {...columnActions} /></div> : null}
