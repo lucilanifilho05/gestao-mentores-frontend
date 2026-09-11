@@ -1,14 +1,14 @@
 .gm-solutions-home { min-height:100vh; display:flex; flex-direction:column; color:#0f172a; background:radial-gradient(circle at 88% 5%,rgba(0,56,168,.08),transparent 25rem),linear-gradient(180deg,#fff 0%,#f8fafc 46%,#f4f7fb 100%); }
 .gm-solutions-container { width:min(100% - 2.5rem,76rem); margin-inline:auto; }
-.gm-solutions-header { position:relative; z-index:10; border-bottom:1px solid rgba(226,232,240,.85); background:rgba(255,255,255,.86); backdrop-filter:blur(16px); }
+.gm-solutions-header { position:relative; z-index:10; border-bottom:1px solid rgba(0,29,87,.35); background:#0038a8; box-shadow:0 8px 24px rgba(0,38,114,.14); }
 .gm-solutions-header-content { min-height:5rem; display:flex; align-items:center; justify-content:space-between; gap:2rem; }
 .gm-solutions-brand { display:flex; align-items:center; gap:1rem; min-width:0; }
 .gm-solutions-brand .gm-brand-logo { flex:none; }
-.gm-solutions-brand-divider { width:1px; height:2rem; background:#e2e8f0; }
-.gm-solutions-brand p { margin:0; font-size:.875rem; font-weight:800; color:#0f172a; }
-.gm-solutions-brand span { display:block; margin-top:.1rem; font-size:.7rem; color:#64748b; }
-.gm-solutions-login { display:inline-flex; align-items:center; gap:.5rem; color:#0038a8; font-size:.82rem; font-weight:800; text-decoration:none; transition:gap 180ms ease,color 180ms ease; }
-.gm-solutions-login:hover { gap:.7rem; color:#002b80; }
+.gm-solutions-brand-divider { width:1px; height:2rem; background:rgba(255,255,255,.3); }
+.gm-solutions-brand p { margin:0; font-size:.875rem; font-weight:800; color:#fff; }
+.gm-solutions-brand span { display:block; margin-top:.1rem; font-size:.7rem; color:rgba(255,255,255,.72); }
+.gm-solutions-login { display:inline-flex; align-items:center; gap:.5rem; color:#fff; font-size:.82rem; font-weight:800; text-decoration:none; transition:gap 180ms ease,color 180ms ease; }
+.gm-solutions-login:hover { gap:.7rem; color:#ffb066; }
 .gm-solutions-main { flex:1; padding-block:clamp(3.5rem,7vw,6.5rem) 3.5rem; }
 .gm-solutions-hero { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:4rem; }
 .gm-solutions-hero-copy { max-width:48rem; }
