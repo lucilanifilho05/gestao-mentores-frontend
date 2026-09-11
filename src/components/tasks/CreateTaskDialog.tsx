@@ -59,7 +59,20 @@ export function CreateTaskDialog({
     Partial<Record<TaskField, string>>
   >({});
   const types = useActivityTypes();
-  const projects = useProjects({ pagina: 1, limite: 100 });
+  const planningProjects = useProjects({
+    pagina: 1,
+    limite: 100,
+    status: 'planejamento',
+  });
+  const ongoingProjects = useProjects({
+    pagina: 1,
+    limite: 100,
+    status: 'em_andamento',
+  });
+  const projects = [
+    ...(planningProjects.data?.data ?? []),
+    ...(ongoingProjects.data?.data ?? []),
+  ];
   const courses = useCourses({
     pagina: 1,
     limite: 100,
@@ -217,7 +230,7 @@ export function CreateTaskDialog({
                 onChange={(e) => { setProjeto(e.target.value); clearFieldError("projeto"); }}
               >
                 <option value="">Selecione</option>
-                {projects.data?.data
+                {projects
                   .filter(
                     (x) =>
                       x.status === "planejamento" ||
