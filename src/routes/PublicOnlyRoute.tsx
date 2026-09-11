@@ -10,5 +10,5 @@ export function PublicOnlyRoute(): JSX.Element {
     return <LoadingScreen />;
   }
 
-  return isAuthenticated ? <Navigate to="/" replace /> : <Outlet />;
+  return isAuthenticated ? <Navigate to="/inicio" replace /> : <Outlet />;
 }

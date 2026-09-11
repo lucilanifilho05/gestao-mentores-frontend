@@ -19,8 +19,14 @@ import { ProjectsPage } from "@/pages/projects/ProjectsPage";
 import { ProjectDetailsPage } from "@/pages/projects/ProjectDetailsPage";
 import { ReportsPage } from "@/pages/reports/ReportsPage";
 import { AccountPage } from "@/pages/account/AccountPage";
+import { SolutionsHomePage } from "@/pages/solutions/SolutionsHomePage";
 
 export const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <SolutionsHomePage />,
+  },
+
   {
     element: <PublicOnlyRoute />,
 
@@ -41,7 +47,7 @@ export const router = createBrowserRouter([
 
         children: [
           {
-            index: true,
+            path: "inicio",
             element: <HomePage />,
           },
 

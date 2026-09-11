@@ -51,7 +51,7 @@ export function LoginPage(): JSX.Element {
     try {
       await login(data);
       const state = location.state as LoginLocationState | null;
-      navigate(state?.from ?? '/', { replace: true });
+      navigate(state?.from ?? '/inicio', { replace: true });
     } catch (error) {
       setServerError(getErrorMessage(error));
     }

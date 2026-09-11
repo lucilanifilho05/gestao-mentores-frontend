@@ -24,6 +24,7 @@ function roleLabel(role: "COORDENADORA" | "MENTOR"): string {
 }
 
 function getPageTitle(pathname: string): string {
+  if (pathname.startsWith("/inicio")) return "Visão geral";
   if (pathname.startsWith("/tipos-atividade")) {
     return "Tipos de atividade";
   }
@@ -80,7 +81,7 @@ export function AppShell(): JSX.Element {
               <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white hover:bg-white/10" aria-label="Fechar menu" onClick={() => setMobileOpen(false)}><X className="h-5 w-5" /></button>
             </div>
             <nav className="flex-1 space-y-1 overflow-y-auto p-4" aria-label="Navegação principal">
-              <NavLink to="/" end className={navItemClass} onClick={() => setMobileOpen(false)}><Home className="h-5 w-5" />Início</NavLink>
+              <NavLink to="/inicio" className={navItemClass} onClick={() => setMobileOpen(false)}><Home className="h-5 w-5" />Início</NavLink>
               <NavLink to="/cursos" className={navItemClass} onClick={() => setMobileOpen(false)}><GraduationCap className="h-5 w-5" />Cursos</NavLink>
               <NavLink to="/turmas" className={navItemClass} onClick={() => setMobileOpen(false)}><Layers3 className="h-5 w-5" />Turmas</NavLink>
               <NavLink to="/tarefas" className={navItemClass} onClick={() => setMobileOpen(false)}><ListTodo className="h-5 w-5" />Tarefas<NotificationBadge count={unreadCount} /></NavLink>
@@ -107,7 +108,7 @@ export function AppShell(): JSX.Element {
         </div>
 
         <nav className="flex-1 space-y-1 p-4" aria-label="Navegação principal">
-          <NavLink to="/" end className={navItemClass}>
+          <NavLink to="/inicio" className={navItemClass}>
             <Home aria-hidden="true" className="h-5 w-5" />
             Início
           </NavLink>
