@@ -32,7 +32,13 @@ type TaskField =
   | "responsavel"
   | "responsavelIds"
   | "prazo";
-export function CreateTaskDialog({
+export function CreateTaskDialog(props: Props): JSX.Element | null {
+  if (!props.open) return null;
+
+  return <CreateTaskDialogContent {...props} />;
+}
+
+function CreateTaskDialogContent({
   open,
   onClose,
   onCreated,
@@ -112,7 +118,6 @@ export function CreateTaskDialog({
       mutation.reset();
     }
   }, [open]);
-  if (!open) return null;
   const close = () => {
     if (!mutation.isPending) onClose();
   };

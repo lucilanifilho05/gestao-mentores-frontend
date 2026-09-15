@@ -26,6 +26,7 @@ export function TaskCard({
     timeStyle: "short",
   }).format(new Date(task.prazoAtual));
   const hasActions = task.status !== "concluida" && (onEdit || onComplete || onStart);
+  const actionCount = [onStart, onEdit, onComplete].filter(Boolean).length;
 
   return (
     <article className={`w-full overflow-hidden rounded-xl border bg-white shadow-sm transition hover:border-blue-300 hover:shadow-md ${task.possuiComentarioNaoLido ? "border-amber-400 ring-2 ring-amber-100" : "gm-border"}`}>
@@ -45,10 +46,10 @@ export function TaskCard({
         </div>
       </button>
       {hasActions ? (
-        <div className="flex gap-2 border-t gm-border bg-slate-50/70 p-3">
-          {onStart ? <button type="button" disabled={actionsDisabled} onClick={onStart} className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50"><Play className="h-3.5 w-3.5" />Iniciar</button> : null}
-          {onEdit ? <button type="button" disabled={actionsDisabled} onClick={onEdit} className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border gm-border bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"><Pencil className="h-3.5 w-3.5" />Editar</button> : null}
-          {onComplete ? <button type="button" disabled={actionsDisabled} onClick={onComplete} className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"><CheckCircle2 className="h-3.5 w-3.5" />Concluir</button> : null}
+        <div className={`grid gap-2 border-t gm-border bg-slate-50/70 p-3 ${actionCount > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+          {onStart ? <button type="button" disabled={actionsDisabled} onClick={onStart} className="inline-flex min-w-0 items-center justify-center gap-2 rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50"><Play className="h-3.5 w-3.5 shrink-0" />Iniciar</button> : null}
+          {onEdit ? <button type="button" disabled={actionsDisabled} onClick={onEdit} className="inline-flex min-w-0 items-center justify-center gap-2 rounded-lg border gm-border bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"><Pencil className="h-3.5 w-3.5 shrink-0" />Editar</button> : null}
+          {onComplete ? <button type="button" disabled={actionsDisabled} onClick={onComplete} className={`inline-flex min-w-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 ${actionCount === 3 ? "col-span-2" : ""}`}><CheckCircle2 className="h-3.5 w-3.5 shrink-0" />Concluir</button> : null}
         </div>
       ) : null}
     </article>
