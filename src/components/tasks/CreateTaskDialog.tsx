@@ -55,6 +55,8 @@ function CreateTaskDialogContent({
   const [tipo, setTipo] = useState("");
   const [responsavel, setResponsavel] = useState("");
   const [responsavelIds, setResponsavelIds] = useState<string[]>([]);
+  const [participanteIds, setParticipanteIds] = useState<string[]>([]);
+  const [supportSearch, setSupportSearch] = useState("");
   const [escopo, setEscopo] = useState<EscopoTarefa>("curso");
   const [curso, setCurso] = useState("");
   const [turma, setTurma] = useState("");
@@ -108,6 +110,8 @@ function CreateTaskDialogContent({
       setTipo("");
       setResponsavel(user?.papel === "MENTOR" ? user.id : "");
       setResponsavelIds([]);
+      setParticipanteIds([]);
+      setSupportSearch("");
       setEscopo("curso");
       setCurso("");
       setTurma("");
@@ -165,6 +169,7 @@ function CreateTaskDialogContent({
         tipoAtividadeId: tipo,
         responsavelId: escopo === "evento_macro" ? undefined : responsavelEfetivo,
         responsavelIds: escopo === "evento_macro" ? responsavelIds : undefined,
+        participanteIds: escopo === "evento_macro" ? undefined : participanteIds,
         escopo,
         cursoId: escopo === "evento_macro" ? undefined : curso,
         turmaId: escopo === "turma" ? turma : undefined,
@@ -271,6 +276,7 @@ function CreateTaskDialogContent({
                   setTurma("");
                   setResponsavel(isMentor ? (user?.id ?? "") : "");
                   setResponsavelIds([]);
+                  setParticipanteIds([]);
                   setFieldErrors({});
                   setValidation(null);
                 }}
@@ -368,7 +374,11 @@ function CreateTaskDialogContent({
                     aria-invalid={Boolean(fieldErrors.responsavel)}
                     disabled={!curso || mentors.isLoading}
                     value={responsavel}
-                    onChange={(e) => { setResponsavel(e.target.value); clearFieldError("responsavel"); }}
+                    onChange={(e) => {
+                      setResponsavel(e.target.value);
+                      setParticipanteIds((current) => current.filter((id) => id !== e.target.value));
+                      clearFieldError("responsavel");
+                    }}
                   >
                     <option value="">Selecione</option>
                     {mentors.data?.map((x) => (
@@ -392,6 +402,18 @@ function CreateTaskDialogContent({
                 isError={macroMentors.isError}
                 error={fieldErrors.responsavelIds}
                 onChange={(ids) => { setResponsavelIds(ids); clearFieldError("responsavelIds"); }}
+              />
+            ) : null}
+            {escopo !== "evento_macro" ? (
+              <SupportMentorSelector
+                mentors={(macroMentors.data?.data ?? []).filter(
+                  (mentor) => mentor.id !== responsavelEfetivo,
+                )}
+                selectedIds={participanteIds}
+                search={supportSearch}
+                isLoading={macroMentors.isLoading}
+                onSearch={setSupportSearch}
+                onChange={setParticipanteIds}
               />
             ) : null}
             <label>
@@ -443,6 +465,75 @@ function CreateTaskDialogContent({
         </form>
       </div>
     </div>
+  );
+}
+
+function SupportMentorSelector({
+  mentors,
+  selectedIds,
+  search,
+  isLoading,
+  onSearch,
+  onChange,
+}: {
+  mentors: UsuarioListado[];
+  selectedIds: string[];
+  search: string;
+  isLoading: boolean;
+  onSearch: (value: string) => void;
+  onChange: (ids: string[]) => void;
+}): JSX.Element {
+  const normalizedSearch = search.trim().toLocaleLowerCase("pt-BR");
+  const visibleMentors = mentors.filter((mentor) =>
+    !normalizedSearch ||
+    mentor.nome.toLocaleLowerCase("pt-BR").includes(normalizedSearch) ||
+    mentor.email.toLocaleLowerCase("pt-BR").includes(normalizedSearch),
+  );
+
+  return (
+    <fieldset className="sm:col-span-2">
+      <legend className="text-sm font-semibold">Mentores de apoio</legend>
+      <p className="mt-1 text-xs text-slate-500">
+        Opcional. Eles visualizarão a tarefa na agenda, sem permissão para alterá-la.
+      </p>
+      <input
+        className="gm-input mt-3"
+        type="search"
+        placeholder="Buscar mentor por nome ou e-mail"
+        value={search}
+        onChange={(event) => onSearch(event.target.value)}
+      />
+      <div className="mt-2 max-h-44 overflow-y-auto rounded-xl border gm-border bg-white p-2">
+        {isLoading ? <p className="p-3 text-sm text-slate-500">Carregando mentores...</p> : null}
+        {!isLoading && visibleMentors.map((mentor) => (
+          <label key={mentor.id} className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-50">
+            <input
+              type="checkbox"
+              className="h-4 w-4"
+              checked={selectedIds.includes(mentor.id)}
+              disabled={!selectedIds.includes(mentor.id) && selectedIds.length >= 20}
+              onChange={(event) => onChange(
+                event.target.checked
+                  ? [...selectedIds, mentor.id]
+                  : selectedIds.filter((id) => id !== mentor.id),
+              )}
+            />
+            <span className="min-w-0">
+              <span className="block text-sm font-medium text-slate-900">{mentor.nome}</span>
+              <span className="block truncate text-xs text-slate-500">{mentor.email}</span>
+            </span>
+          </label>
+        ))}
+        {!isLoading && visibleMentors.length === 0 ? (
+          <p className="p-3 text-sm text-slate-500">Nenhum mentor encontrado.</p>
+        ) : null}
+      </div>
+      {selectedIds.length > 0 ? (
+        <p className="mt-2 text-xs font-semibold text-blue-700">
+          {selectedIds.length}/20 {selectedIds.length === 1 ? "mentor marcado" : "mentores marcados"}
+        </p>
+      ) : null}
+    </fieldset>
   );
 }
 

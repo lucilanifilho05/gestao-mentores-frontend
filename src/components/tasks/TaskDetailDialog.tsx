@@ -1,13 +1,37 @@
 import { useEffect, useState } from "react";
-import { CalendarClock, CheckCircle2, MessageSquare, Paperclip, Play, Send, X } from "lucide-react";
+import {
+  CalendarClock,
+  CheckCircle2,
+  Handshake,
+  MessageSquare,
+  Paperclip,
+  Play,
+  Send,
+  X,
+} from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { RichTextContent } from "@/components/ui/RichTextContent";
 import { useAuth } from "@/hooks/useAuth";
-import { useAddTaskComment, useCompleteTask, useMarkTaskCommentsRead, useRescheduleTask, useStartTask, useTask } from "@/hooks/useTasks";
+import {
+  useAddTaskComment,
+  useCompleteTask,
+  useMarkTaskCommentsRead,
+  useRescheduleTask,
+  useStartTask,
+  useTask,
+} from "@/hooks/useTasks";
 import { getErrorMessage } from "@/utils/api-error";
 
-export function TaskDetailDialog({ taskId, onClose, onChanged }: { taskId: string | null; onClose: () => void; onChanged: (message: string) => void }): JSX.Element | null {
+export function TaskDetailDialog({
+  taskId,
+  onClose,
+  onChanged,
+}: {
+  taskId: string | null;
+  onClose: () => void;
+  onChanged: (message: string) => void;
+}): JSX.Element | null {
   const task = useTask(taskId);
   const { user } = useAuth();
   const complete = useCompleteTask();
@@ -20,31 +44,318 @@ export function TaskDetailDialog({ taskId, onClose, onChanged }: { taskId: strin
   const [comment, setComment] = useState("");
   const data = task.data;
   useEffect(() => {
-    if (user?.papel === "MENTOR" && data?.possuiComentarioNaoLido && !markCommentsRead.isPending) {
+    if (
+      user?.papel === "MENTOR" &&
+      data?.podeAlterar &&
+      data.possuiComentarioNaoLido &&
+      !markCommentsRead.isPending
+    ) {
       markCommentsRead.mutate(data.id);
     }
-  }, [data?.id, data?.possuiComentarioNaoLido, user?.papel]);
+  }, [data?.id, data?.podeAlterar, data?.possuiComentarioNaoLido, user?.papel]);
   if (!taskId) return null;
-  const format = (value: string) => new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
+  const format = (value: string) =>
+    new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(new Date(value));
 
-  return <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/55 px-4 py-8" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-    <div className="gm-panel w-full max-w-3xl overflow-hidden" role="dialog" aria-modal="true">
-      <div className="flex justify-between border-b gm-border px-6 py-5"><div><p className="text-sm font-semibold gm-text-primary">Detalhes da tarefa</p><h2 className="mt-1 text-xl font-bold text-slate-950">{data?.titulo ?? "Carregando…"}</h2></div><button type="button" aria-label="Fechar" onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button></div>
-      {task.isLoading ? <div className="h-72 animate-pulse bg-slate-50" /> : null}
-      {task.isError ? <div className="p-6"><Alert variant="error" title="Não foi possível carregar a tarefa">{getErrorMessage(task.error)}</Alert></div> : null}
-      {data ? <div className="max-h-[75vh] overflow-y-auto"><div className="space-y-6 p-6">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5"><Info label="ID global" value={`#${data.numero}`} /><Info label="Projeto" value={data.projetoNome} /><Info label="Responsável" value={data.responsavel.nome} /><Info label="Contexto" value={data.turmaCodigo ?? data.cursoNome ?? "Evento macro"} /><Info label="Prazo" value={format(data.prazoAtual)} /></div>
-        {data.descricao ? <div><h3 className="text-sm font-bold">Observações</h3><RichTextContent html={data.descricao} /></div> : null}
-        {complete.isError || start.isError || reschedule.isError || addComment.isError ? <Alert variant="error" title="Não foi possível executar a operação">{getErrorMessage(complete.error ?? start.error ?? reschedule.error ?? addComment.error)}</Alert> : null}
-        {data.status !== "concluida" ? <div className="rounded-xl border gm-border p-4"><h3 className="font-bold">Reagendar</h3><div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]"><input className="gm-input" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} /><input className="gm-input" placeholder="Justificativa (opcional)" maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} /><Button variant="secondary" disabled={!date} isLoading={reschedule.isPending} onClick={async () => { await reschedule.mutateAsync({ id: data.id, prazoNovo: new Date(date).toISOString(), justificativa: reason }); await task.refetch(); setDate(""); setReason(""); onChanged("Tarefa reagendada com sucesso."); }}><CalendarClock className="h-4 w-4" />Reagendar</Button></div></div> : null}
-        <div><h3 className="font-bold">Arquivos vinculados</h3><div className="mt-3 flex flex-wrap gap-2">{data.links.map((url, index) => <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 w-11 items-center justify-center rounded-xl border gm-border bg-slate-50 text-blue-700 hover:bg-blue-50" title={`Abrir arquivo ${index + 1}`} aria-label={`Abrir arquivo ${index + 1}`}><Paperclip className="h-5 w-5" /></a>)}{data.links.length === 0 ? <p className="text-sm text-slate-500">Nenhum arquivo vinculado.</p> : null}</div></div>
-        {data.reagendamentos.length > 0 ? <div><h3 className="font-bold">Histórico de prazos</h3><div className="mt-3 space-y-2">{data.reagendamentos.map((item) => <div key={item.id} className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900"><strong>{format(item.prazoAnterior)}</strong> → <strong>{format(item.prazoNovo)}</strong>{item.justificativa ? <p className="mt-1">{item.justificativa}</p> : null}</div>)}</div></div> : null}
-        <div className="rounded-xl border gm-border p-4"><div className="flex items-center gap-2"><MessageSquare className="h-4 w-4 gm-text-primary" /><h3 className="font-bold">Comentários da coordenação</h3></div><div className="mt-4 space-y-3">{data.comentarios.map((item) => <div key={item.id} className="rounded-lg bg-slate-50 p-3"><div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm text-slate-900">{item.autor.nome}</strong><span className="text-xs text-slate-500">{format(item.criadoEm)}</span></div><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{item.conteudo}</p></div>)}{data.comentarios.length === 0 ? <p className="text-sm text-slate-500">Nenhum comentário adicionado.</p> : null}</div>{user?.papel === "COORDENADORA" && data.status !== "concluida" ? <form className="mt-4 border-t gm-border pt-4" onSubmit={(event) => { event.preventDefault(); const conteudo = comment.trim(); if (!conteudo) return; addComment.mutate({ id: data.id, conteudo }, { onSuccess: () => setComment("") }); }}><label><span className="mb-2 block text-sm font-semibold">Novo comentário</span><textarea className="gm-input h-24 py-3" maxLength={2000} placeholder="Solicite informações ou uma revisão da atividade" value={comment} onChange={(event) => setComment(event.target.value)} /></label><div className="mt-2 flex items-center justify-between gap-3"><span className="text-xs text-slate-500">{comment.length.toLocaleString("pt-BR")}/2.000</span><Button type="submit" isLoading={addComment.isPending} disabled={!comment.trim()}><Send className="h-4 w-4" />Adicionar comentário</Button></div></form> : null}</div>
-      </div><div className="flex justify-end gap-3 border-t gm-border bg-slate-50/70 px-6 py-4"><Button variant="secondary" onClick={onClose}>Fechar</Button>{data.status === "planejada" ? <Button variant="secondary" isLoading={start.isPending} onClick={async () => { await start.mutateAsync(data.id); await task.refetch(); onChanged("Tarefa iniciada com sucesso."); }}><Play className="h-4 w-4" />Iniciar tarefa</Button> : null}{data.status !== "concluida" ? <Button isLoading={complete.isPending} onClick={async () => { await complete.mutateAsync(data.id); onChanged("Tarefa concluída com sucesso."); onClose(); }}><CheckCircle2 className="h-4 w-4" />Concluir tarefa</Button> : null}</div></div> : null}
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/55 px-4 py-8"
+      role="presentation"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="gm-panel w-full max-w-3xl overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="flex justify-between border-b gm-border px-6 py-5">
+          <div>
+            <p className="text-sm font-semibold gm-text-primary">
+              Detalhes da tarefa
+            </p>
+            <h2 className="mt-1 text-xl font-bold text-slate-950">
+              {data?.titulo ?? "Carregando…"}
+            </h2>
+          </div>
+          <button
+            type="button"
+            aria-label="Fechar"
+            onClick={onClose}
+            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        {task.isLoading ? (
+          <div className="h-72 animate-pulse bg-slate-50" />
+        ) : null}
+        {task.isError ? (
+          <div className="p-6">
+            <Alert variant="error" title="Não foi possível carregar a tarefa">
+              {getErrorMessage(task.error)}
+            </Alert>
+          </div>
+        ) : null}
+        {data ? (
+          <div className="max-h-[75vh] overflow-y-auto">
+            <div className="space-y-6 p-6">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                <Info label="ID global" value={`#${data.numero}`} />
+                <Info label="Projeto" value={data.projetoNome} />
+                <Info label="Responsável" value={data.responsavel.nome} />
+                <Info
+                  label="Contexto"
+                  value={data.turmaCodigo ?? data.cursoNome ?? "Evento macro"}
+                />
+                <Info label="Prazo" value={format(data.prazoAtual)} />
+              </div>
+              {data.tipoVinculo === "apoio" ? (
+                <Alert variant="info" title="Participação de apoio">
+                  Você foi marcado como apoio nesta atividade. É possível
+                  consultar as informações, mas somente o responsável ou a
+                  coordenação pode alterá-la.
+                </Alert>
+              ) : null}
+              {data.participantes.length > 0 ? (
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Handshake className="h-4 w-4 text-violet-700" />
+                    <h3 className="text-sm font-bold">Mentores de apoio</h3>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {data.participantes.map((mentor) => (
+                      <span
+                        key={mentor.id}
+                        className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-800"
+                      >
+                        {mentor.nome}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {data.descricao ? (
+                <div>
+                  <h3 className="text-sm font-bold">Observações</h3>
+                  <RichTextContent html={data.descricao} />
+                </div>
+              ) : null}
+              {complete.isError ||
+              start.isError ||
+              reschedule.isError ||
+              addComment.isError ? (
+                <Alert
+                  variant="error"
+                  title="Não foi possível executar a operação"
+                >
+                  {getErrorMessage(
+                    complete.error ??
+                      start.error ??
+                      reschedule.error ??
+                      addComment.error,
+                  )}
+                </Alert>
+              ) : null}
+              {data.podeAlterar && data.status !== "concluida" ? (
+                <div className="rounded-xl border gm-border p-4">
+                  <h3 className="font-bold">Reagendar</h3>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+                    <input
+                      className="gm-input"
+                      type="datetime-local"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                    />
+                    <input
+                      className="gm-input"
+                      placeholder="Justificativa (opcional)"
+                      maxLength={2000}
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                    />
+                    <Button
+                      variant="secondary"
+                      disabled={!date}
+                      isLoading={reschedule.isPending}
+                      onClick={async () => {
+                        await reschedule.mutateAsync({
+                          id: data.id,
+                          prazoNovo: new Date(date).toISOString(),
+                          justificativa: reason,
+                        });
+                        await task.refetch();
+                        setDate("");
+                        setReason("");
+                        onChanged("Tarefa reagendada com sucesso.");
+                      }}
+                    >
+                      <CalendarClock className="h-4 w-4" />
+                      Reagendar
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+              <div>
+                <h3 className="font-bold">Arquivos vinculados</h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {data.links.map((url, index) => (
+                    <a
+                      key={url}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-xl border gm-border bg-slate-50 text-blue-700 hover:bg-blue-50"
+                      title={`Abrir arquivo ${index + 1}`}
+                      aria-label={`Abrir arquivo ${index + 1}`}
+                    >
+                      <Paperclip className="h-5 w-5" />
+                    </a>
+                  ))}
+                  {data.links.length === 0 ? (
+                    <p className="text-sm text-slate-500">
+                      Nenhum arquivo vinculado.
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              {data.reagendamentos.length > 0 ? (
+                <div>
+                  <h3 className="font-bold">Histórico de prazos</h3>
+                  <div className="mt-3 space-y-2">
+                    {data.reagendamentos.map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900"
+                      >
+                        <strong>{format(item.prazoAnterior)}</strong> →{" "}
+                        <strong>{format(item.prazoNovo)}</strong>
+                        {item.justificativa ? (
+                          <p className="mt-1">{item.justificativa}</p>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              <div className="rounded-xl border gm-border p-4">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 gm-text-primary" />
+                  <h3 className="font-bold">Comentários da coordenação</h3>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {data.comentarios.map((item) => (
+                    <div key={item.id} className="rounded-lg bg-slate-50 p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <strong className="text-sm text-slate-900">
+                          {item.autor.nome}
+                        </strong>
+                        <span className="text-xs text-slate-500">
+                          {format(item.criadoEm)}
+                        </span>
+                      </div>
+                      <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
+                        {item.conteudo}
+                      </p>
+                    </div>
+                  ))}
+                  {data.comentarios.length === 0 ? (
+                    <p className="text-sm text-slate-500">
+                      Nenhum comentário adicionado.
+                    </p>
+                  ) : null}
+                </div>
+                {user?.papel === "COORDENADORA" &&
+                data.status !== "concluida" ? (
+                  <form
+                    className="mt-4 border-t gm-border pt-4"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      const conteudo = comment.trim();
+                      if (!conteudo) return;
+                      addComment.mutate(
+                        { id: data.id, conteudo },
+                        { onSuccess: () => setComment("") },
+                      );
+                    }}
+                  >
+                    <label>
+                      <span className="mb-2 block text-sm font-semibold">
+                        Novo comentário
+                      </span>
+                      <textarea
+                        className="gm-input h-24 py-3"
+                        maxLength={2000}
+                        placeholder="Solicite informações ou uma revisão da atividade"
+                        value={comment}
+                        onChange={(event) => setComment(event.target.value)}
+                      />
+                    </label>
+                    <div className="mt-2 flex items-center justify-between gap-3">
+                      <span className="text-xs text-slate-500">
+                        {comment.length.toLocaleString("pt-BR")}/2.000
+                      </span>
+                      <Button
+                        type="submit"
+                        isLoading={addComment.isPending}
+                        disabled={!comment.trim()}
+                      >
+                        <Send className="h-4 w-4" />
+                        Adicionar comentário
+                      </Button>
+                    </div>
+                  </form>
+                ) : null}
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 border-t gm-border bg-slate-50/70 px-6 py-4">
+              <Button variant="secondary" onClick={onClose}>
+                Fechar
+              </Button>
+              {data.podeAlterar && data.status === "planejada" ? (
+                <Button
+                  variant="secondary"
+                  isLoading={start.isPending}
+                  onClick={async () => {
+                    await start.mutateAsync(data.id);
+                    await task.refetch();
+                    onChanged("Tarefa iniciada com sucesso.");
+                  }}
+                >
+                  <Play className="h-4 w-4" />
+                  Iniciar tarefa
+                </Button>
+              ) : null}
+              {data.podeAlterar && data.status !== "concluida" ? (
+                <Button
+                  isLoading={complete.isPending}
+                  onClick={async () => {
+                    await complete.mutateAsync(data.id);
+                    onChanged("Tarefa concluída com sucesso.");
+                    onClose();
+                  }}
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Concluir tarefa
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
-  </div>;
+  );
 }
 
 function Info({ label, value }: { label: string; value: string }): JSX.Element {
-  return <div className="rounded-xl bg-slate-50 p-3"><p className="text-xs font-bold text-slate-500">{label}</p><p className="mt-1 text-sm font-semibold">{value}</p></div>;
+  return (
+    <div className="rounded-xl bg-slate-50 p-3">
+      <p className="text-xs font-bold text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-semibold">{value}</p>
+    </div>
+  );
 }

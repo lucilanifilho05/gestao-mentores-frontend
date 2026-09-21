@@ -69,9 +69,16 @@ export function TaskCalendarPreview({ id, task, anchor, showOwner, onDismiss }: 
         <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">#{task.numero}</span>
       </div>
       <p className="mt-2 text-xs font-semibold text-blue-700">{statusLabels[task.status]} · {task.tipoAtividadeNome}</p>
+      {task.tipoVinculo === "apoio" ? (
+        <p className="mt-2 rounded-lg bg-violet-50 px-2.5 py-2 text-xs font-semibold text-violet-800">
+          Você foi marcado como apoio nesta atividade. A tarefa é somente para consulta.
+        </p>
+      ) : null}
       <dl className="mt-3 grid gap-1.5 text-xs text-slate-600">
         <div><dt className="inline font-bold text-slate-700">Projeto: </dt><dd className="inline">{task.projetoNome}</dd></div>
         {showOwner ? <div><dt className="inline font-bold text-slate-700">Responsável: </dt><dd className="inline">{task.responsavel.nome}</dd></div> : null}
+        {!showOwner && task.tipoVinculo === "apoio" ? <div><dt className="inline font-bold text-slate-700">Responsável: </dt><dd className="inline">{task.responsavel.nome}</dd></div> : null}
+        {task.participantes.length > 0 ? <div><dt className="inline font-bold text-slate-700">Apoio: </dt><dd className="inline">{task.participantes.map((mentor) => mentor.nome).join(", ")}</dd></div> : null}
         {context ? <div><dt className="inline font-bold text-slate-700">Contexto: </dt><dd className="inline">{context}</dd></div> : null}
         <div><dt className="inline font-bold text-slate-700">Prazo: </dt><dd className="inline">{formatDeadline(task.prazoAtual)}</dd></div>
       </dl>

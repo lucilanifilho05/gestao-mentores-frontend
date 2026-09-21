@@ -93,6 +93,7 @@ function TaskEntry({ task, showOwner, onOpen }: { task: TarefaResumo; showOwner:
       >
         <span className="font-bold">{time(task.prazoAtual)}</span>
         <span className="ml-1 font-semibold">#{task.numero}</span>
+        {task.tipoVinculo === "apoio" ? <span className="ml-1 rounded bg-violet-200/70 px-1 py-0.5 font-bold text-violet-800">Apoio</span> : null}
         <span className="mt-0.5 block truncate font-semibold">{task.titulo}</span>
         {showOwner ? <span className="mt-0.5 block truncate opacity-75">{task.responsavel.nome}</span> : null}
       </button>

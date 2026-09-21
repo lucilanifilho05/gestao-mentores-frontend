@@ -5,6 +5,11 @@ export interface PessoaTarefa {
   nome: string;
   email: string;
 }
+export type VinculoTarefa = "minhas" | "apoio" | "todas";
+export type TipoVinculoTarefa = "responsavel" | "apoio" | "gestao" | "nenhum";
+export interface ParticipanteTarefa extends PessoaTarefa {
+  criadoEm: string;
+}
 export interface TarefaResumo {
   id: string;
   numero: number;
@@ -18,6 +23,10 @@ export interface TarefaResumo {
   criadoPor: PessoaTarefa;
   responsavelId: string;
   responsavel: PessoaTarefa;
+  participantes: ParticipanteTarefa[];
+  tipoVinculo: TipoVinculoTarefa;
+  podeAlterar: boolean;
+  marcacaoVisualizada: boolean;
   escopo: EscopoTarefa;
   cursoId: string | null;
   cursoNome: string | null;
@@ -73,6 +82,7 @@ export interface ListarTarefasParams {
   tipoAtividadeId?: string;
   status?: StatusTarefa;
   escopo?: EscopoTarefa;
+  vinculo?: VinculoTarefa;
 }
 export interface ListarTarefasResponse {
   data: TarefaResumo[];
@@ -85,6 +95,7 @@ export interface CriarTarefaDto {
   descricao?: string;
   responsavelId?: string;
   responsavelIds?: string[];
+  participanteIds?: string[];
   escopo: EscopoTarefa;
   cursoId?: string;
   turmaId?: string;
