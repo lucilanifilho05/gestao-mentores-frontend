@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { TaskCalendarPreview } from "@/components/tasks/TaskCalendarPreview";
 import type { StatusTarefa, TarefaResumo } from "@/types/tasks.types";
 
 const WEEK_DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -60,18 +61,43 @@ function monthDays(month: Date): Date[] {
 }
 
 function TaskEntry({ task, showOwner, onOpen }: { task: TarefaResumo; showOwner: boolean; onOpen: (id: string) => void }): JSX.Element {
+  const tooltipId = useId();
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [previewAnchor, setPreviewAnchor] = useState<DOMRect | null>(null);
+  const dismissPreview = useCallback(() => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    hoverTimer.current = null;
+    setPreviewAnchor(null);
+  }, []);
+
+  useEffect(() => dismissPreview, [dismissPreview]);
+
+  const schedulePreview = (element: HTMLButtonElement) => {
+    if (!window.matchMedia("(hover: hover)").matches) return;
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    const anchor = element.getBoundingClientRect();
+    hoverTimer.current = setTimeout(() => setPreviewAnchor(anchor), 300);
+  };
+
   return (
-    <button
-      type="button"
-      className={`block w-full rounded-lg border px-2 py-1.5 text-left text-xs transition hover:brightness-95 ${statusStyles[task.status]}`}
-      title={`${statusLabels[task.status]} · ${task.titulo}`}
-      onClick={() => onOpen(task.id)}
-    >
-      <span className="font-bold">{time(task.prazoAtual)}</span>
-      <span className="ml-1 font-semibold">#{task.numero}</span>
-      <span className="mt-0.5 block truncate font-semibold">{task.titulo}</span>
-      {showOwner ? <span className="mt-0.5 block truncate opacity-75">{task.responsavel.nome}</span> : null}
-    </button>
+    <>
+      <button
+        type="button"
+        className={`block w-full rounded-lg border px-2 py-1.5 text-left text-xs transition hover:brightness-95 ${statusStyles[task.status]}`}
+        aria-describedby={previewAnchor ? tooltipId : undefined}
+        onMouseEnter={(event) => schedulePreview(event.currentTarget)}
+        onMouseLeave={dismissPreview}
+        onFocus={(event) => setPreviewAnchor(event.currentTarget.getBoundingClientRect())}
+        onBlur={dismissPreview}
+        onClick={() => { dismissPreview(); onOpen(task.id); }}
+      >
+        <span className="font-bold">{time(task.prazoAtual)}</span>
+        <span className="ml-1 font-semibold">#{task.numero}</span>
+        <span className="mt-0.5 block truncate font-semibold">{task.titulo}</span>
+        {showOwner ? <span className="mt-0.5 block truncate opacity-75">{task.responsavel.nome}</span> : null}
+      </button>
+      {previewAnchor ? <TaskCalendarPreview id={tooltipId} task={task} anchor={previewAnchor} showOwner={showOwner} onDismiss={dismissPreview} /> : null}
+    </>
   );
 }
 
