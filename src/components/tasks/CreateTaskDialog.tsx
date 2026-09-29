@@ -54,6 +54,7 @@ function CreateTaskDialogContent({
   const [links, setLinks] = useState<string[]>([]);
   const [tipo, setTipo] = useState("");
   const [responsavel, setResponsavel] = useState("");
+  const [assignToSelf, setAssignToSelf] = useState(false);
   const [responsavelIds, setResponsavelIds] = useState<string[]>([]);
   const [participanteIds, setParticipanteIds] = useState<string[]>([]);
   const [supportSearch, setSupportSearch] = useState("");
@@ -100,7 +101,9 @@ function CreateTaskDialogContent({
     papel: "MENTOR",
     ativo: true,
   });
-  const responsavelEfetivo = isMentor ? (user?.id ?? "") : responsavel;
+  const responsavelEfetivo = isMentor || assignToSelf
+    ? (user?.id ?? "")
+    : responsavel;
   useEffect(() => {
     if (open) {
       setTitulo("");
@@ -109,6 +112,7 @@ function CreateTaskDialogContent({
       setLinks([]);
       setTipo("");
       setResponsavel(user?.papel === "MENTOR" ? user.id : "");
+      setAssignToSelf(false);
       setResponsavelIds([]);
       setParticipanteIds([]);
       setSupportSearch("");
@@ -275,6 +279,7 @@ function CreateTaskDialogContent({
                   setCurso("");
                   setTurma("");
                   setResponsavel(isMentor ? (user?.id ?? "") : "");
+                  setAssignToSelf(false);
                   setResponsavelIds([]);
                   setParticipanteIds([]);
                   setFieldErrors({});
@@ -356,7 +361,7 @@ function CreateTaskDialogContent({
               </select>
               <FieldError message={fieldErrors.tipo} />
             </label>
-            {escopo !== "evento_macro" ? <label>
+            {escopo !== "evento_macro" ? <div>
               <span className="mb-2 block text-sm font-semibold">
                 Responsável *
               </span>
@@ -369,31 +374,58 @@ function CreateTaskDialogContent({
                 </div>
               ) : (
                 <>
-                  <select
-                    className={`${inputClass} ${fieldErrors.responsavel ? "gm-input-error" : ""}`}
-                    aria-invalid={Boolean(fieldErrors.responsavel)}
-                    disabled={!curso || mentors.isLoading}
-                    value={responsavel}
-                    onChange={(e) => {
-                      setResponsavel(e.target.value);
-                      setParticipanteIds((current) => current.filter((id) => id !== e.target.value));
+                  <button
+                    type="button"
+                    aria-pressed={assignToSelf}
+                    className={`mb-2 inline-flex w-full items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-bold transition ${assignToSelf ? "border-blue-700 bg-blue-50 text-blue-700" : "gm-border bg-white text-slate-700 hover:bg-slate-50"}`}
+                    onClick={() => {
+                      const next = !assignToSelf;
+                      setAssignToSelf(next);
+                      setResponsavel("");
+                      if (next) {
+                        setParticipanteIds((current) =>
+                          current.filter((id) => id !== user?.id),
+                        );
+                      }
                       clearFieldError("responsavel");
                     }}
                   >
-                    <option value="">Selecione</option>
-                    {mentors.data?.map((x) => (
-                      <option key={x.id} value={x.id}>{x.nome}</option>
-                    ))}
-                  </select>
+                    {assignToSelf ? "✓ Atividade atribuída a mim" : "Atribuir atividade a mim"}
+                  </button>
+                  {assignToSelf ? (
+                    <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+                      <p className="text-sm font-semibold text-blue-950">{user?.nome}</p>
+                      <p className="mt-1 text-xs text-blue-700">
+                        Você será a responsável pela tarefa.
+                      </p>
+                    </div>
+                  ) : (
+                    <select
+                      className={`${inputClass} ${fieldErrors.responsavel ? "gm-input-error" : ""}`}
+                      aria-invalid={Boolean(fieldErrors.responsavel)}
+                      disabled={!curso || mentors.isLoading}
+                      value={responsavel}
+                      onChange={(e) => {
+                        setResponsavel(e.target.value);
+                        setParticipanteIds((current) => current.filter((id) => id !== e.target.value));
+                        clearFieldError("responsavel");
+                      }}
+                    >
+                      <option value="">Selecione um mentor</option>
+                      {mentors.data?.map((x) => (
+                        <option key={x.id} value={x.id}>{x.nome}</option>
+                      ))}
+                    </select>
+                  )}
                   <FieldError message={fieldErrors.responsavel} />
                 </>
               )}
-              {!isMentor && curso && !mentors.isLoading && mentors.data?.length === 0 ? (
+              {!isMentor && !assignToSelf && curso && !mentors.isLoading && mentors.data?.length === 0 ? (
                 <span className="mt-1 block text-xs text-amber-700">
                   Este curso não possui mentores ativos vinculados.
                 </span>
               ) : null}
-            </label> : null}
+            </div> : null}
             {escopo === "evento_macro" ? (
               <MacroMentorSelector
                 mentors={macroMentors.data?.data ?? []}

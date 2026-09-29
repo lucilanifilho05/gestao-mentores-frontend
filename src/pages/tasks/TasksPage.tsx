@@ -21,13 +21,23 @@ function currentMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function monthRange(month: string): { inicio: string; fim: string } {
+function calendarGridRange(month: string): { inicio: string; fim: string } {
   const [year, monthNumber] = month.split("-").map(Number);
-  const lastDay = new Date(year, monthNumber, 0).getDate();
+  const firstDay = new Date(year, monthNumber - 1, 1);
+  const lastDay = new Date(year, monthNumber, 0);
+  const gridStart = new Date(firstDay);
+  gridStart.setDate(firstDay.getDate() - firstDay.getDay());
+  const gridEnd = new Date(lastDay);
+  gridEnd.setDate(lastDay.getDate() + (6 - lastDay.getDay()));
+
   return {
-    inicio: `${month}-01`,
-    fim: `${month}-${String(lastDay).padStart(2, "0")}`,
+    inicio: dateValue(gridStart),
+    fim: dateValue(gridEnd),
   };
+}
+
+function dateValue(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function Column({ title, description, icon, tasks, empty, onOpen, onEdit, onComplete, onStart, actionsDisabled }: {
@@ -65,7 +75,7 @@ export function TasksPage(): JSX.Element {
   const start = useStartTask();
   const parsedTaskNumber = Number(taskNumber);
   const validTaskNumber = Number.isInteger(parsedTaskNumber) && parsedTaskNumber > 0 ? parsedTaskNumber : undefined;
-  const calendarRange = monthRange(calendarMonth);
+  const calendarRange = calendarGridRange(calendarMonth);
   const tasks = useTasks(view === "agenda"
     ? { pagina: 1, limite: 100, inicio: calendarRange.inicio, fim: calendarRange.fim, responsavelId: coordinator ? owner || undefined : undefined, vinculo: coordinator ? undefined : vinculo }
     : { pagina: 1, limite: 100, numero: validTaskNumber, inicio: inicio || undefined, fim: fim || undefined, status: status || undefined, cursoId: course || undefined, turmaId: classId || undefined, tipoAtividadeId: activityTypeId || undefined, responsavelId: coordinator ? owner || undefined : undefined, vinculo: coordinator ? undefined : vinculo });
@@ -135,7 +145,7 @@ export function TasksPage(): JSX.Element {
       <div className="mt-5 grid gap-4 border-t gm-border pt-5 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
         <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">De</span><input className="gm-input" type="date" value={inicio} max={fim || undefined} onChange={(event) => setInicio(event.target.value)} /></label>
         <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Até</span><input className="gm-input" type="date" value={fim} min={inicio || undefined} onChange={(event) => setFim(event.target.value)} /></label>
-        {coordinator ? <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Mentor</span><select className="gm-input" value={owner} onChange={(event) => setOwner(event.target.value)}><option value="">Todos</option>{mentors.data?.data.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label> : null}
+        {coordinator ? <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Responsável</span><select className="gm-input" value={owner} onChange={(event) => setOwner(event.target.value)}><option value="">Todos</option>{user ? <option value={user.id}>Eu — {user.nome}</option> : null}{mentors.data?.data.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label> : null}
         <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Curso</span><select className="gm-input" value={course} onChange={(event) => { setCourse(event.target.value); setClassId(""); }}><option value="">Todos</option>{courses.data?.data.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
         <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Turma</span><select className="gm-input" value={classId} onChange={(event) => setClassId(event.target.value)}><option value="">Todas</option>{classes.data?.data.map((item) => <option key={item.id} value={item.id}>{item.codigo}</option>)}</select></label>
         <label><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Tipo de atividade</span><select className="gm-input" value={activityTypeId} onChange={(event) => setActivityTypeId(event.target.value)}><option value="">Todos</option>{activityTypes.data?.data.map((item) => <option key={item.id} value={item.id}>{item.nome}{item.ativo ? "" : " (inativo)"}</option>)}</select></label>
@@ -146,7 +156,7 @@ export function TasksPage(): JSX.Element {
     </details> : null}
     {view === "agenda" && coordinator ? <section className="gm-panel p-5 sm:p-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <label className="w-full sm:max-w-sm"><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Mentor</span><select className="gm-input" value={owner} onChange={(event) => setOwner(event.target.value)}><option value="">Todos os mentores</option>{mentors.data?.data.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+        <label className="w-full sm:max-w-sm"><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Responsável</span><select className="gm-input" value={owner} onChange={(event) => setOwner(event.target.value)}><option value="">Todos os responsáveis</option>{user ? <option value={user.id}>Eu — {user.nome}</option> : null}{mentors.data?.data.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
         <div className="flex items-center gap-3">{tasks.isFetching && !tasks.isLoading ? <span className="text-xs font-semibold gm-text-primary">Atualizando calendário…</span> : null}{owner ? <Button variant="ghost" onClick={() => setOwner("")}><FilterX className="h-4 w-4" />Limpar filtro</Button> : null}</div>
       </div>
     </section> : null}
