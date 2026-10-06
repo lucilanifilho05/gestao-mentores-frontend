@@ -210,15 +210,15 @@ export function TaskDetailDialog({
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group inline-flex min-h-14 items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 transition hover:border-amber-300 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      className="group inline-flex min-h-14 items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-blue-900 transition hover:border-blue-300 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                       title={`Abrir arquivo ${index + 1}`}
                       aria-label={`Abrir arquivo ${index + 1}`}
                     >
-                      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-200/70 text-amber-800">
+                      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
                         <Paperclip className="h-5 w-5" />
                       </span>
                       <span className="min-w-0 flex-1 text-left text-sm font-bold">Arquivo {index + 1}</span>
-                      <ExternalLink className="h-4 w-4 shrink-0 text-amber-700 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+                      <ExternalLink className="h-4 w-4 shrink-0 text-blue-600 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
                     </a>
                   ))}
                   {data.links.length === 0 ? (
