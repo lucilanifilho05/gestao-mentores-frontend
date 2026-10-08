@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
 import { useChangeMyPassword, useUpdateMyProfile } from '@/hooks/useUpdateUser';
 import { getErrorMessage } from '@/utils/api-error';
+import { GoogleCalendarPanel } from '@/components/account/GoogleCalendarPanel';
 
 export function AccountPage(): JSX.Element {
   const { user, reloadUser, logout } = useAuth();
@@ -40,6 +41,7 @@ export function AccountPage(): JSX.Element {
   return <div className="mx-auto max-w-4xl space-y-6">
     <section><p className="gm-eyebrow">Conta e segurança</p><h2 className="mt-2 text-3xl font-bold text-slate-950">Minha conta</h2><p className="mt-2 text-sm text-slate-600">Atualize seus dados pessoais e sua senha de acesso.</p></section>
     {message ? <Alert variant="success" title="Alteração concluída">{message}</Alert> : null}
+    <GoogleCalendarPanel />
     <section className="gm-panel p-5 sm:p-6"><div className="flex items-center gap-3 border-b gm-border pb-4"><UserRound className="h-5 w-5 gm-text-primary" /><div><h3 className="font-bold">Dados do perfil</h3><p className="text-sm text-slate-500">Seu papel de acesso não pode ser alterado.</p></div></div>
       {updateProfile.isError ? <div className="mt-4"><Alert variant="error" title="Não foi possível atualizar">{getErrorMessage(updateProfile.error)}</Alert></div> : null}
       <form className="mt-5 grid gap-5 sm:grid-cols-2" onSubmit={(event) => { event.preventDefault(); void saveProfile(); }}><label><span className="mb-2 block text-sm font-semibold">Nome completo</span><input className="gm-input" required minLength={3} maxLength={150} value={nome} onChange={(event) => setNome(event.target.value)} /></label><label><span className="mb-2 block text-sm font-semibold">E-mail</span><input className="gm-input" required type="email" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} /></label><div className="sm:col-span-2"><Button type="submit" isLoading={updateProfile.isPending}><Save className="h-4 w-4" />Salvar perfil</Button></div></form>

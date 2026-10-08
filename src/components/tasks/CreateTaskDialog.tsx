@@ -31,6 +31,7 @@ type TaskField =
   | "turma"
   | "responsavel"
   | "responsavelIds"
+  | "inicio"
   | "prazo";
 export function CreateTaskDialog(props: Props): JSX.Element | null {
   if (!props.open) return null;
@@ -139,6 +140,7 @@ function CreateTaskDialogContent({
     if (!projeto) errors.projeto = "Selecione o projeto da tarefa.";
     if (!titulo.trim()) errors.titulo = "Informe o título da tarefa.";
     if (!tipo) errors.tipo = "Selecione o tipo de atividade.";
+    if (!inicio) errors.inicio = "Informe o início da tarefa.";
     if (!prazo) errors.prazo = "Informe o prazo final da tarefa.";
     if (escopo !== "evento_macro" && !curso) {
       errors.curso = "Selecione o curso da tarefa.";
@@ -152,8 +154,8 @@ function CreateTaskDialogContent({
     if (escopo === "evento_macro" && responsavelIds.length === 0) {
       errors.responsavelIds = "Selecione pelo menos um mentor responsável.";
     }
-    if (inicio && prazo && prazo < inicio) {
-      errors.prazo = "O prazo final não pode ser anterior ao prazo inicial.";
+    if (inicio && prazo && prazo <= inicio) {
+      errors.prazo = "O prazo final deve ser posterior ao início da tarefa.";
     }
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
@@ -177,7 +179,7 @@ function CreateTaskDialogContent({
         escopo,
         cursoId: escopo === "evento_macro" ? undefined : curso,
         turmaId: escopo === "turma" ? turma : undefined,
-        prazoInicio: inicio ? new Date(inicio).toISOString() : undefined,
+        prazoInicio: new Date(inicio).toISOString(),
         prazoAtual: new Date(prazo).toISOString(),
         links,
       });
@@ -449,13 +451,16 @@ function CreateTaskDialogContent({
               />
             ) : null}
             <label>
-              <span className="mb-2 block text-sm font-semibold">Início</span>
+              <span className="mb-2 block text-sm font-semibold">Início *</span>
               <input
-                className={inputClass}
+                className={`${inputClass} ${fieldErrors.inicio ? "gm-input-error" : ""}`}
+                aria-invalid={Boolean(fieldErrors.inicio)}
                 type="datetime-local"
+                required
                 value={inicio}
-                onChange={(e) => setInicio(e.target.value)}
+                onChange={(e) => { setInicio(e.target.value); clearFieldError("inicio"); }}
               />
+              <FieldError message={fieldErrors.inicio} />
             </label>
             <label>
               <span className="mb-2 block text-sm font-semibold">
@@ -465,6 +470,7 @@ function CreateTaskDialogContent({
                 className={`${inputClass} ${fieldErrors.prazo ? "gm-input-error" : ""}`}
                 aria-invalid={Boolean(fieldErrors.prazo)}
                 type="datetime-local"
+                required
                 value={prazo}
                 onChange={(e) => { setPrazo(e.target.value); clearFieldError("prazo"); }}
               />
