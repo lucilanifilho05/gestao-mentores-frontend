@@ -99,7 +99,7 @@ export interface CriarTarefaDto {
   escopo: EscopoTarefa;
   cursoId?: string;
   turmaId?: string;
-  prazoInicio: string;
+  prazoInicio?: string;
   prazoAtual: string;
   links?: string[];
 }

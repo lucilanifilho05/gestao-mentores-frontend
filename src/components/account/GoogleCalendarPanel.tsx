@@ -14,7 +14,14 @@ export function GoogleCalendarPanel(): JSX.Element {
   const [params, setParams] = useSearchParams();
   const [result] = useState(() => params.get('googleAgenda'));
   const queryKey = ['google-agenda', user?.id];
-  const status = useQuery({ queryKey, queryFn: googleCalendarApi.status, enabled: Boolean(user), refetchInterval: 15000 });
+  const status = useQuery({
+    queryKey,
+    queryFn: googleCalendarApi.status,
+    enabled: Boolean(user),
+    staleTime: 30000,
+    refetchInterval: (query) =>
+      (query.state.data?.pendentes ?? 0) > 0 ? 15000 : false,
+  });
   const authorize = useMutation({ mutationFn: googleCalendarApi.authorize, onSuccess: ({ url }) => { window.location.assign(url); } });
   const invalidate = () => client.invalidateQueries({ queryKey });
   const disconnect = useMutation({ mutationFn: googleCalendarApi.disconnect, onSuccess: invalidate });
@@ -30,7 +37,7 @@ export function GoogleCalendarPanel(): JSX.Element {
   const busy = authorize.isPending || disconnect.isPending || retry.isPending;
 
   return <section className="gm-panel p-5 sm:p-6">
-    <div className="flex items-center gap-3 border-b gm-border pb-4"><CalendarDays className="h-5 w-5 gm-text-primary" /><div><h3 className="font-bold">Google Agenda</h3><p className="text-sm text-slate-500">Veja suas novas tarefas em um calendário separado, com início e prazo final.</p></div></div>
+    <div className="flex items-center gap-3 border-b gm-border pb-4"><CalendarDays className="h-5 w-5 gm-text-primary" /><div><h3 className="font-bold">Google Agenda</h3><p className="text-sm text-slate-500">Veja em um calendário separado as novas tarefas que possuem início e prazo final.</p></div></div>
     <div className="mt-5 space-y-4">
       {result === 'conectado' ? <Alert variant="success">Google Agenda conectado. As próximas tarefas atribuídas a você serão enviadas automaticamente.</Alert> : null}
       {result === 'erro' ? <Alert variant="error">Não foi possível conectar. Tente novamente e autorize o acesso ao calendário. Para trocar de conta Google, desconecte a conta atual primeiro.</Alert> : null}

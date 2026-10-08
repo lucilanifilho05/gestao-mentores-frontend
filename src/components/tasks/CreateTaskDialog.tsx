@@ -140,7 +140,6 @@ function CreateTaskDialogContent({
     if (!projeto) errors.projeto = "Selecione o projeto da tarefa.";
     if (!titulo.trim()) errors.titulo = "Informe o título da tarefa.";
     if (!tipo) errors.tipo = "Selecione o tipo de atividade.";
-    if (!inicio) errors.inicio = "Informe o início da tarefa.";
     if (!prazo) errors.prazo = "Informe o prazo final da tarefa.";
     if (escopo !== "evento_macro" && !curso) {
       errors.curso = "Selecione o curso da tarefa.";
@@ -179,7 +178,7 @@ function CreateTaskDialogContent({
         escopo,
         cursoId: escopo === "evento_macro" ? undefined : curso,
         turmaId: escopo === "turma" ? turma : undefined,
-        prazoInicio: new Date(inicio).toISOString(),
+        prazoInicio: inicio ? new Date(inicio).toISOString() : undefined,
         prazoAtual: new Date(prazo).toISOString(),
         links,
       });
@@ -451,12 +450,11 @@ function CreateTaskDialogContent({
               />
             ) : null}
             <label>
-              <span className="mb-2 block text-sm font-semibold">Início *</span>
+              <span className="mb-2 block text-sm font-semibold">Início</span>
               <input
                 className={`${inputClass} ${fieldErrors.inicio ? "gm-input-error" : ""}`}
                 aria-invalid={Boolean(fieldErrors.inicio)}
                 type="datetime-local"
-                required
                 value={inicio}
                 onChange={(e) => { setInicio(e.target.value); clearFieldError("inicio"); }}
               />
